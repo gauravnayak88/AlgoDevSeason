@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem List</title>
+</head>
+<body>
+    <h1>Problems</h1>
+    <ul>
+    {% for problem in problems %}
+        <li>
+            <h2>{{ problem.name }}</h2>
+            <p>{{ problem.statement }}</p>
+            <a href="{% url 'probdisp' problem.pk %}" ><button>View</button></a>
+        </li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
