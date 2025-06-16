@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Problem
+from .models import Problem, ProblemForm
 
 # Create your views here.
 
@@ -76,3 +76,15 @@ def logout_user(request):
     logout(request)
     messages.info(request,'logout successful')
     return redirect('/login/')
+
+def add_problem(request):
+    if request.method=="POST":
+        form = ProblemForm(request.POST)
+        problem = form.save(commit=False)
+        problem.save()
+
+        return redirect('/problist/')
+    
+    form=ProblemForm()
+    context={"form":form}
+    return render(request, "addprob.html", context)

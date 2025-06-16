@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django import forms
 
 DIFFICULTY=[("Hard","Hard"), ("Easy","Easy"), ("Medium", "Medium")]
 
@@ -33,3 +34,9 @@ class TestCase(models.Model):
 
     def __str__(self):
         return self.input
+
+
+class ProblemForm(forms.ModelForm):
+    class Meta:
+        model=Problem
+        fields="__all__"

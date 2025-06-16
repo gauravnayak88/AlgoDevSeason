@@ -2,6 +2,9 @@
 {% block title %}Dashboard{% endblock %}
 {% block content %}
     <h1>Welcome to Online Judge</h1>
-    <p>The ultimate judge<p>
-    <a href="{% url 'problist' %}"><button>Problems</button></a>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form }}
+        <button>Add</button>
+    </form>
 {% endblock %}
