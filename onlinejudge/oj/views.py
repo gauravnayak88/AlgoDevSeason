@@ -2,6 +2,9 @@ from django.shortcuts import render
 from .models import Problem
 
 # Create your views here.
+def dashboard(request):
+    return render(request, "dashboard.html")
+
 def problist(request):
     problems=Problem.objects.all()
 
