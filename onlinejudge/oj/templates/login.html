@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+      <form
+        method="post"
+        enctype="multipart/form-data"
+      >
+        <h1 style="text-align: center">
+          <span style="color: green">Online Judge</span>
+        </h1>
+
+        {% csrf_token %}
+        <!-- CSRF token for security -->
+
+        <!-- Login heading -->
+        <h3>Login</h3>
+        <hr />
+
+        <!-- Display error/success messages -->
+        {% if messages %}
+        <div role="alert">
+          {% for message in messages %} {{ message }} {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Username input field -->
+        <div>
+          <label for="exampleInputEmail1">Username</label>
+          <input
+            type="text"
+            name="username"
+            id="exampleInputEmail1"
+            aria-describedby="emailHelp"
+            placeholder="Enter username"
+            required
+          />
+        </div>
+
+        <!-- Password input field -->
+        <div>
+          <label for="exampleInputPassword1">Password</label>
+          <input
+            type="password"
+            name="password"
+            id="exampleInputPassword1"
+            placeholder="Password"
+            required
+          />
+        </div>
+
+        <!-- Link to registration page -->
+        <p>Don't have an account <a href="/register/">Register</a></p>
+
+        <!-- Submit button -->
+        <button type="submit">Submit</button>
+      </form>
+{% endblock %}

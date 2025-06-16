@@ -1,13 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Problem Display</title>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Problem Details{% endblock %}
+
+{% block content %}
     <h1>{{ problem.name }}</h1>
-    <p><i>Contributed by <b>{{ problem.written_by }}</b></i><p>
+    <p><i>-Contributed by <b>{{ problem.written_by }}</b></i><p>
     <p>{{ problem.statement }}<p>
-</body>
-</html>
+{% endblock %}

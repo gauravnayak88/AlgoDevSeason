@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+      <!-- Registration form -->
+      <form
+        method="post"
+        enctype="multipart/form-data"
+      >
+        {% csrf_token %}
+        <!-- CSRF token for security -->
+
+        <!-- Registration form heading -->
+        <h1 style="text-align: center">
+          <span style="color: green">Mysite</span>
+        </h1>
+        <h3>Register</h3>
+        <hr />
+
+        <!-- Display error/success messages -->
+        {% if messages %}
+        <div role="alert">
+          {% for message in messages %} {{ message }} {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Username input field -->
+        <div>
+          <label for="exampleInputEmail1">Username</label>
+          <input
+            type="text"
+            name="username"
+            id="exampleInputEmail1"
+            aria-describedby="emailHelp"
+            placeholder="Enter username"
+            required
+          />
+        </div>
+
+        <!-- Password input field -->
+        <div>
+          <label for="exampleInputPassword1">Password</label>
+          <input
+            type="password"
+            name="password"
+            id="exampleInputPassword1"
+            placeholder="Password"
+            required
+          />
+        </div>
+
+        <!-- Link to login page for users who already have an account -->
+        <p>Already have an account <a href="/login/">Login</a></p>
+
+        <!-- Submit button -->
+        <button type="submit">Submit</button>
+      </form>
+{% endblock %}
