@@ -1,9 +1,15 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 DIFFICULTY=[("Hard","Hard"), ("Easy","Easy"), ("Medium", "Medium")]
 
 # Create your models here.
 class Problem(models.Model):
+    written_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="problems"
+    )
     statement=models.TextField(blank=True)
     name=models.CharField()
     difficulty=models.CharField(choices=DIFFICULTY)
