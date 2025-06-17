@@ -4,6 +4,11 @@
 
 {% block content %}
     <h1>Problems</h1> <a href="{% url 'add-problem' %}"><button>Contribute</button></a>
+    {% if messages %}
+        <div role="alert">
+          {% for message in messages %} {{ message }} {% endfor %}
+        </div>
+        {% endif %}
     <ul>
     {% for problem in problems %}
         <li>

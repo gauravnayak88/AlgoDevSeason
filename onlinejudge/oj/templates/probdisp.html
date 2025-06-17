@@ -5,5 +5,11 @@
 {% block content %}
     <h1>{{ problem.name }}</h1>
     <p><i>-Contributed by <b>{{ problem.written_by }}</b></i><p>
+    {% if user.is_authenticated %}
+        {% if user == problem.written_by %}
+            <a href="{% url 'update-problem' problem.pk %}"><button>Update</button></a>
+            <a href="{% url 'delete-problem' problem.pk %}"><button>Delete</button></a>
+        {% endif %}
+    {% endif %}
     <p>{{ problem.statement }}<p>
 {% endblock %}

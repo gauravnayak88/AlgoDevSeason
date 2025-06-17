@@ -91,3 +91,27 @@ def add_problem(request):
     form=ProblemForm()
     context={"form":form}
     return render(request, "addprob.html", context)
+
+def update_problem(request, pk):
+    problem = Problem.objects.get(pk=pk)
+
+    if request.method == 'POST':
+        form = ProblemForm(request.POST, instance=problem)
+        if form.is_valid():
+            updated_problem = form.save(commit=False)
+            updated_problem.written_by = problem.written_by  # retain original user
+            updated_problem.save()
+            return redirect('/problist/')
+    else:
+        form = ProblemForm(instance=problem)
+
+    context = {"form": form}
+    return render(request, "addprob.html", context)
+
+def delete_problem(request, pk):
+    problem = Problem.objects.get(pk=pk)
+    if problem:
+        problem.delete()
+        messages.info(request,'Deleted Successfully')
+
+    return redirect('/problist/')
