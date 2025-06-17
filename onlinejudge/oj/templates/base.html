@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="style.css">
+    {% comment %} <link rel="stylesheet" href="style.css"> {% endcomment %}
     <title>{% block title %}Base template{% endblock %}</title>
 </head>
 
 <body>
     <div id="sidebar">
         {% block sidebar %}
-        <p>This is present in all pages<p>
-        <a href="{% url 'logout-user' %}">Logout</a>
+        {% comment %} <p>This is present in all pages<p> {% endcomment %}
+        <a href="{% url 'dashboard' %}"><button>Home</button></a>
+        <a href="#"><button>Explore</button></a>
+        <a href="{% url 'problist' %}"><button>Problems</button></a>
+        <a href="#"><button>Contest</button></a>
+        <a href="#"><button>Discuss</button></a>
+        <a href="{% url 'logout-user' %}"><button>Logout</button></a>
         {% endblock %}
     </div>
 

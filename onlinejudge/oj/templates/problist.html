@@ -3,7 +3,7 @@
 {% block title %}Problems List{% endblock %}
 
 {% block content %}
-    <h1>Problems</h1>
+    <h1>Problems</h1> <a href="{% url 'add-problem' %}"><button>Contribute</button></a>
     <ul>
     {% for problem in problems %}
         <li>
