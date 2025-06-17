@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Problem, ProblemForm
+from .models import Problem, ProblemForm, TestCase, TestCaseForm
 
 # Create your views here.
 
@@ -115,3 +115,23 @@ def delete_problem(request, pk):
         messages.info(request,'Deleted Successfully')
 
     return redirect('/problist/')
+
+def add_testcase(request, pk):
+    if request.method=='POST':
+        form = TestCaseForm(request.POST)
+        if form.is_valid():
+            tc=form.save(commit=False)
+            tc.problem=Problem.objects.get(pk=pk)
+            tc.save()
+
+            return redirect('/problist/')
+        
+    form= TestCaseForm()
+    context={"form":form}
+    return render(request, "addtc.html", context)
+
+def testcase_list(request, pk):
+    problem=Problem.objects.get(pk=pk)
+    tcs=TestCase.objects.filter(problem=problem)
+
+    return render(request, "tclist.html", {"cases":tcs})

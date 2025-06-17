@@ -34,9 +34,14 @@ class TestCase(models.Model):
 
     def __str__(self):
         return self.input
-
-
+    
+    
 class ProblemForm(forms.ModelForm):
     class Meta:
         model=Problem
         exclude=["written_by"]
+
+class TestCaseForm(forms.ModelForm):
+    class Meta:
+        model=TestCase
+        exclude=["problem"]

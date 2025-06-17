@@ -10,6 +10,8 @@
             <a href="{% url 'update-problem' problem.pk %}"><button>Update</button></a>
             <a href="{% url 'delete-problem' problem.pk %}"><button>Delete</button></a>
         {% endif %}
+        <a href="{% url "add-testcase" problem.pk %}"><button>Contribute test case</button></a>
     {% endif %}
     <p>{{ problem.statement }}<p>
+    <a href="{% url "testcase-list" problem.pk %}"><button>View test cases</button></a>
 {% endblock %}

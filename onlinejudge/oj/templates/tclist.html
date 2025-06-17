@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Problems List{% endblock %}
+
+{% block content %}
+    <h1>Test Cases</h1> 
+    {% comment %} <a href="{% url 'add-problem' %}"><button>Contribute</button></a> {% endcomment %}
+    {% if messages %}
+        <div role="alert">
+          {% for message in messages %} {{ message }} {% endfor %}
+        </div>
+        {% endif %}
+    <ul>
+    {% for tc in cases %}
+        <li>
+            <p>{{ tc.input }}</p>
+            <p>{{ tc.output }}</p>
+        </li>
+    {% endfor %}
+    </ul>
+{% endblock %}
