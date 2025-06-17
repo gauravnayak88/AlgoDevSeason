@@ -27,11 +27,11 @@
 
         <!-- Username input field -->
         <div>
-          <label for="exampleInputEmail1">Username</label>
+          <label for="username">Username</label>
           <input
             type="text"
             name="username"
-            id="exampleInputEmail1"
+            id="username"
             aria-describedby="emailHelp"
             placeholder="Enter username"
             required
@@ -40,20 +40,30 @@
 
         <!-- Password input field -->
         <div>
-          <label for="exampleInputPassword1">Password</label>
+          <label for="password">Password</label>
           <input
             type="password"
             name="password"
-            id="exampleInputPassword1"
+            id="password"
             placeholder="Password"
             required
           />
         </div>
 
+        <!-- Email input field -->
+         <label for="email">Email</label>
+        <input
+          type="email"
+          name="email"
+          id="email"
+          placeholder="Enter email"
+          required
+        />
+
         <!-- Link to login page for users who already have an account -->
         <p>Already have an account <a href="/login/">Login</a></p>
 
         <!-- Submit button -->
-        <button type="submit">Submit</button>
+        <button type="submit">Register</button>
       </form>
 {% endblock %}

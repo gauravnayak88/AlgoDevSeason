@@ -29,8 +29,9 @@ class Solution(models.Model):
 
 class TestCase(models.Model):
     input=models.TextField()
-    output=models.CharField()
+    output=models.TextField()
     problem=models.ForeignKey("Problem", on_delete=models.CASCADE)
+    written_by=models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.input
@@ -44,4 +45,4 @@ class ProblemForm(forms.ModelForm):
 class TestCaseForm(forms.ModelForm):
     class Meta:
         model=TestCase
-        exclude=["problem"]
+        exclude=["problem", "written_by"]

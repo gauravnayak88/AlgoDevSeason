@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Problem, ProblemForm, TestCase, TestCaseForm
+from django.db.models import Q
 
 # Create your views here.
 
@@ -27,14 +28,17 @@ def register_user(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        email = request.POST.get('email')
 
-        user = User.objects.filter(username=username)
+        if User.objects.filter(username=username).exists():
+            messages.info(request, 'User with this username already exists')
+            return redirect("/register/")
 
-        if user.exists():
-            messages.info(request,'User with this username already exists')
+        if User.objects.filter(email=email).exists():
+            messages.info(request, 'User with this email already exists')
             return redirect("/register/")
         
-        user = User.objects.create_user(username=username)
+        user = User.objects.create_user(username=username, email=email)
 
         user.set_password(password)
 
@@ -51,14 +55,17 @@ def register_user(request):
 def login_user(request):
 
     if request.method == "POST":
-        username = request.POST.get('username')
+        login_input = request.POST.get('username')
         password = request.POST.get('password')
 
-        if not User.objects.filter(username=username).exists():
-            messages.info(request,'User with this username does not exist')
+        try:
+            # Try to fetch user by username or email
+            user_obj = User.objects.get(Q(username=login_input) | Q(email=login_input))
+        except User.DoesNotExist:
+            messages.info(request, 'User with this username/email does not exist')
             return redirect('/login/')
         
-        user = authenticate(username=username, password=password)
+        user = authenticate(username=user_obj.username, password=password)
 
         if user is None:
             messages.info(request,'invalid password')
@@ -122,6 +129,7 @@ def add_testcase(request, pk):
         if form.is_valid():
             tc=form.save(commit=False)
             tc.problem=Problem.objects.get(pk=pk)
+            tc.written_by=request.user
             tc.save()
 
             return redirect('/problist/')

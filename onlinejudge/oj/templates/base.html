@@ -16,6 +16,7 @@
         <a href="#"><button>Discuss</button></a>
         {% if user.is_authenticated %}
         <a href="{% url 'logout-user' %}"><button>Logout</button></a>
+        <b>{{ user.username }}</b>
         {% else %}
         <a href="{% url 'login-user' %}"><button>Login</button></a>
         {% endif %}
