@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Problem, ProblemForm
 
@@ -77,14 +78,16 @@ def logout_user(request):
     messages.info(request,'logout successful')
     return redirect('/login/')
 
+@login_required
 def add_problem(request):
     if request.method=="POST":
         form = ProblemForm(request.POST)
-        problem = form.save(commit=False)
-        problem.save()
-
-        return redirect('/problist/')
-    
+        if form.is_valid():
+            problem = form.save(commit=False)
+            problem.written_by=request.user
+            problem.save()
+            return redirect('/problist/')
+        
     form=ProblemForm()
     context={"form":form}
     return render(request, "addprob.html", context)

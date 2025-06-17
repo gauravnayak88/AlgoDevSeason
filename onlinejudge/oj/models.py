@@ -39,4 +39,4 @@ class TestCase(models.Model):
 class ProblemForm(forms.ModelForm):
     class Meta:
         model=Problem
-        fields="__all__"
+        exclude=["written_by"]
