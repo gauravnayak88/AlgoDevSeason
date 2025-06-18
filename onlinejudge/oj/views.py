@@ -143,3 +143,28 @@ def testcase_list(request, pk):
     tcs=TestCase.objects.filter(problem=problem)
 
     return render(request, "tclist.html", {"cases":tcs})
+
+def update_testcase(request, pid, cid):
+    problem=Problem.objects.get(pk=pid)
+    tc=TestCase.objects.get(pk=cid)
+
+    if request.method=='POST':
+        form = TestCaseForm(request.POST, instance=tc)
+        if form.is_valid():
+            tc=form.save(commit=False)
+            tc.problem=problem
+            tc.written_by=request.user
+            tc.save()
+
+            return redirect(f"/testcaselist/{pid}")
+        
+    form= TestCaseForm(instance=tc)
+    context={"form":form}
+    return render(request, "addtc.html", context)
+
+def delete_testcase(request, pid, cid):
+    tc=TestCase.objects.get(pk=cid)
+    if tc:
+        tc.delete()
+
+    return redirect(f"/testcaselist/{pid}")

@@ -15,6 +15,10 @@
         <li>
             <p>{{ tc.input }}</p>
             <p>{{ tc.output }}</p>
+            {% if user == tc.written_by %}
+                <a href="{% url "update-testcase" tc.problem.pk tc.pk %}"><button>Update</button></a>
+                <a href="{% url "delete-testcase" tc.problem.pk tc.pk %}"><button>Delete</button></a>
+            {% endif %}
         </li>
     {% endfor %}
     </ul>
