@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Solutions List{% endblock %}
+
+{% block content %}
+    <h1>Test Cases</h1> 
+    {% comment %} <a href="{% url 'add-problem' %}"><button>Contribute</button></a> {% endcomment %}
+    {% if messages %}
+        <div role="alert">
+          {% for message in messages %} {{ message }} {% endfor %}
+        </div>
+        {% endif %}
+    <ul>
+    {% for solution in solutions %}
+        <li>
+            <p>{{ solution.code }}</p>
+            <p>{{ solution.verdict }}</p>
+            <p>Submitted by {{ solution.written_by }} at {{ solution.submitted_at }}</p>
+        </li>
+    {% endfor %}
+    </ul>
+{% endblock %}

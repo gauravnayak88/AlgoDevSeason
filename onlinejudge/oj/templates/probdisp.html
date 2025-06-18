@@ -14,4 +14,11 @@
     {% endif %}
     <p>{{ problem.statement }}<p>
     <a href="{% url "testcase-list" problem.pk %}"><button>View test cases</button></a>
+    <a href="{% url "solution-list" problem.pk %}"><button>View Solutions</button></a>
+    <form method="POST" action="{% url "add-solution" problem.pk %}">
+        {% csrf_token %}
+        {{ form }}
+        <button type="button">Run</button>
+        <button type="submit">Submit</button>
+    </form>
 {% endblock %}

@@ -21,6 +21,7 @@ class Problem(models.Model):
 class Solution(models.Model):
     problem=models.ForeignKey("Problem", on_delete=models.CASCADE)
     code=models.TextField(blank=True)
+    written_by=models.ForeignKey(User, on_delete=models.CASCADE)
     verdict=models.CharField()
     submitted_at=models.DateTimeField(auto_now_add=True)
 
@@ -46,3 +47,8 @@ class TestCaseForm(forms.ModelForm):
     class Meta:
         model=TestCase
         exclude=["problem", "written_by"]
+
+class SolutionForm(forms.ModelForm):
+    class Meta:
+        model=Solution
+        exclude=["problem", "verdict", "written_by"]
