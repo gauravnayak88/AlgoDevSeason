@@ -4,7 +4,9 @@
 
 {% block content %}
     <h1>Test Cases</h1> 
-    {% comment %} <a href="{% url 'add-problem' %}"><button>Contribute</button></a> {% endcomment %}
+    <a href="{% url "add-testcase" problem.pk %}"><button>Contribute test case</button></a>
+    <a href="{% url "probdisp" problem.pk %}"><button>Go to problem</button></a>
+    
     {% if messages %}
         <div role="alert">
           {% for message in messages %} {{ message }} {% endfor %}

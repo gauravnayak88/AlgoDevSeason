@@ -3,10 +3,11 @@ from django.contrib.auth.models import User
 from django import forms
 
 DIFFICULTY=[("hard","Hard"), ("easy","Easy"), ("medium", "Medium")]
+ROLES=[('student', 'Student'),('staff', 'Staff')]
+LANGUAGES=[('C++', 'C++'), ('Java', 'Java'), ('Python', 'Python')]
 
 # Create your models here.
 class Profile(models.Model):
-    ROLES=[('student', 'Student'),('staff', 'Staff')]
     role=models.CharField(choices=ROLES, default='student')
     user=models.OneToOneField(User, on_delete=models.CASCADE)
 
@@ -28,6 +29,7 @@ class Problem(models.Model):
 
 class Solution(models.Model):
     problem=models.ForeignKey("Problem", on_delete=models.CASCADE)
+    language=models.CharField(choices=LANGUAGES)
     code=models.TextField(blank=True)
     written_by=models.ForeignKey(User, on_delete=models.CASCADE)
     verdict=models.CharField()
@@ -44,6 +46,12 @@ class TestCase(models.Model):
 
     def __str__(self):
         return self.input
+    
+class RegisterForm(forms.Form):
+    username = forms.CharField(max_length=150)
+    email = forms.EmailField()
+    password = forms.CharField(widget=forms.PasswordInput)
+    role = forms.ChoiceField(choices=ROLES)
     
     
 class ProblemForm(forms.ModelForm):

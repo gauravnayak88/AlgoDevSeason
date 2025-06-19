@@ -3,8 +3,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Problem, ProblemForm, TestCase, TestCaseForm, Solution, SolutionForm
+from .models import Profile, Problem, ProblemForm, TestCase, TestCaseForm, Solution, SolutionForm, RegisterForm
 from django.db.models import Q
+from django.http import HttpResponseForbidden
 
 # Create your views here.
 
@@ -25,30 +26,35 @@ def probdisp(request, pk):
     return render(request, "probdisp.html", context)
 
 def register_user(request):
-
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        email = request.POST.get('email')
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            role = form.cleaned_data['role']
+            if User.objects.filter(username=username).exists():
+                messages.info(request, 'User with this username already exists')
+                return redirect("/register/")
 
-        if User.objects.filter(username=username).exists():
-            messages.info(request, 'User with this username already exists')
-            return redirect("/register/")
+            if User.objects.filter(email=email).exists():
+                messages.info(request, 'User with this email already exists')
+                return redirect("/register/")
+            
+            user = User.objects.create_user(username=username, email=email)
 
-        if User.objects.filter(email=email).exists():
-            messages.info(request, 'User with this email already exists')
-            return redirect("/register/")
-        
-        user = User.objects.create_user(username=username, email=email)
+            user.set_password(password)
 
-        user.set_password(password)
+            user.save()
 
-        user.save()
-        
-        messages.info(request,'User created successfully')
-        return redirect('/login/')
+            # Create the profile 
+            Profile.objects.create(user=user, role=role)
+            
+            messages.info(request,'User created successfully')
+            return redirect('/login/')
 
-    context={}
+    form = RegisterForm()
+    context={'form':form}
     return render(request, "register.html", context)
     
     
@@ -84,10 +90,12 @@ def login_user(request):
 def logout_user(request):
     logout(request)
     messages.info(request,'logout successful')
-    return redirect('/login/')
+    return redirect('/')
 
 @login_required
 def add_problem(request):
+    if request.user.profile.role != 'staff':
+        return HttpResponseForbidden("Only staff can add problems")
     if request.method=="POST":
         form = ProblemForm(request.POST)
         if form.is_valid():
@@ -133,7 +141,7 @@ def add_testcase(request, pk):
             tc.written_by=request.user
             tc.save()
 
-            return redirect('/problist/')
+            return redirect(f"/testcaselist/{pk}")
         
     form= TestCaseForm()
     context={"form":form}
@@ -143,7 +151,7 @@ def testcase_list(request, pk):
     problem=Problem.objects.get(pk=pk)
     tcs=TestCase.objects.filter(problem=problem)
 
-    return render(request, "tclist.html", {"cases":tcs})
+    return render(request, "tclist.html", {"cases":tcs, "problem":problem})
 
 def update_testcase(request, pid, cid):
     problem=Problem.objects.get(pk=pid)

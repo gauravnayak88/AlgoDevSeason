@@ -13,7 +13,7 @@
 
         <!-- Registration form heading -->
         <h1 style="text-align: center">
-          <span style="color: green">Mysite</span>
+          <span style="color: green">Online Judge</span>
         </h1>
         <h3>Register</h3>
         <hr />
@@ -25,45 +25,8 @@
         </div>
         {% endif %}
 
-        <!-- Username input field -->
-        <div>
-          <label for="username">Username</label>
-          <input
-            type="text"
-            name="username"
-            id="username"
-            aria-describedby="emailHelp"
-            placeholder="Enter username"
-            required
-          />
-        </div>
-
-        <!-- Password input field -->
-        <div>
-          <label for="password">Password</label>
-          <input
-            type="password"
-            name="password"
-            id="password"
-            placeholder="Password"
-            required
-          />
-        </div>
-
-        <!-- Email input field -->
-         <label for="email">Email</label>
-        <input
-          type="email"
-          name="email"
-          id="email"
-          placeholder="Enter email"
-          required
-        />
-
-        <!-- Link to login page for users who already have an account -->
-        <p>Already have an account <a href="/login/">Login</a></p>
-
-        <!-- Submit button -->
+        {% csrf_token %}
+        {{ form.as_p }}
         <button type="submit">Register</button>
       </form>
 {% endblock %}
