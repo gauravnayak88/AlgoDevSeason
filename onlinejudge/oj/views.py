@@ -176,6 +176,7 @@ def solution_list(request, pid):
     context={"solutions":solutions}
     return render(request, "sollist.html", context)
 
+@login_required
 def add_solution(request, pid):
     if (request.method=='POST'):
         form=SolutionForm(request.POST)

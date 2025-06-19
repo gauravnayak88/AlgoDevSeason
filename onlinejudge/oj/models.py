@@ -2,9 +2,17 @@ from django.db import models
 from django.contrib.auth.models import User
 from django import forms
 
-DIFFICULTY=[("Hard","Hard"), ("Easy","Easy"), ("Medium", "Medium")]
+DIFFICULTY=[("hard","Hard"), ("easy","Easy"), ("medium", "Medium")]
 
 # Create your models here.
+class Profile(models.Model):
+    ROLES=[('student', 'Student'),('staff', 'Staff')]
+    role=models.CharField(choices=ROLES, default='student')
+    user=models.OneToOneField(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.user.username} {self.role}"
+
 class Problem(models.Model):
     written_by = models.ForeignKey(
         User,
