@@ -13,6 +13,9 @@ from django.http import HttpResponseForbidden
 def dashboard(request):
     return render(request, "dashboard.html")
 
+def profile(request):
+    return render(request, "profile.html")
+
 def problist(request):
     problems=Problem.objects.all()
 
