@@ -195,3 +195,8 @@ def add_solution(request, pid):
         solution.save()
 
         return redirect(f'/probdisp/{pid}')
+    
+def solution_disp(request, sid):
+    solution=Solution.objects.get(pk=sid)
+
+    return render(request, 'soldisp.html', {'solution':solution})

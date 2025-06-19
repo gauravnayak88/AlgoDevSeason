@@ -4,7 +4,11 @@
 
 {% block content %}
     <h1>Test Cases</h1> 
-    <a href="{% url "add-testcase" problem.pk %}"><button>Contribute test case</button></a>
+    {% if user.is_authenticated %}
+        {% if user.profile.role == 'staff' %}
+            <a href="{% url "add-testcase" problem.pk %}"><button>Contribute test case</button></a>
+        {% endif %}
+    {% endif %}
     <a href="{% url "probdisp" problem.pk %}"><button>Go to problem</button></a>
     
     {% if messages %}
