@@ -6,6 +6,33 @@
 {% if user.is_authenticated %}
 <h2>{{ user.username }}</h2>
 <p>Email: {{ user.email }}<p>
-<p>Role: {{ user.profile.role }}<p>
+<p>Join Date: {{ user.profile.join_date }}<p>
+<p>Role: {{ user.profile.role.capitalize }}<p>
+{% if user.profile.role == 'staff' %}
+<h2>Problems Contributed</h2>
+{% if user.problems %}
+    <ul>
+    {% for problem in user.problems.all %}
+        <li>
+            {{ problem.name }} - {{ problem.difficulty }}
+            <a href="{% url "probdisp" problem.pk %}"><button>View</button></a>
+            <a href="{% url "update-problem" problem.pk %}"><button>Edit</button></a>
+            <a href="{% url "delete-problem" problem.pk %}"><button>Delete</button></a>
+        </li>
+    {% endfor %}
+    </ul>
+{% endif %}
+{% endif %}
+<h2>Problems Solved</h2>
+{% if problems_solved %}
+    <ul>
+        {% for problem in problems_solved %}
+            <li>
+                {{ problem.name }} - {{ problem.difficulty }}
+                <a href="{% url "probdisp" problem.pk %}"><button>View</button></a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
 {% endif %}
 {% endblock  %}

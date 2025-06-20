@@ -11,11 +11,12 @@
             <a href="{% url 'update-problem' problem.pk %}"><button>Update</button></a>
             <a href="{% url 'delete-problem' problem.pk %}"><button>Delete</button></a>
         {% endif %}
-        <a href="{% url "add-testcase" problem.pk %}"><button>Contribute test case</button></a>
+        <a href="{% url "testcase-list" problem.pk %}"><button>View Test Cases</button></a>
+        <a href="{% url "add-testcase" problem.pk %}"><button>Contribute Test Case</button></a>
     {% endif %}
     {% endif %}
         <p>{{ problem.statement }}<p>
-    <a href="{% url "testcase-list" problem.pk %}"><button>View test cases</button></a>
+    <a href="{% url "mysolutions-list" problem.pk %}"><button>View My Solutions</button></a>
     <a href="{% url "solution-list" problem.pk %}"><button>View Solutions</button></a>
     <form method="POST" action="{% url "add-solution" problem.pk %}">
         {% csrf_token %}
@@ -23,4 +24,19 @@
         <button type="button">Run</button>
         <button type="submit">Submit</button>
     </form>
+    {% if problem.testcases %}
+        <h2>Sample test cases</h2>
+        <ul>
+        {% for tc in problem.testcases.all %}
+            {% if tc.is_sample %}
+                <li>
+                    <h3>Input</h3>
+                    {{ tc.input }}
+                    <h3>Output</h3>
+                    {{ tc.output }}
+                </li>
+            {% endif %}
+        {% endfor %}
+        </ul>
+    {% endif %}
 {% endblock %}

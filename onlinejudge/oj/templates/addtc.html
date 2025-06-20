@@ -4,6 +4,11 @@
     <h1>Add test case details</h1>
     <form method="POST">
         {% csrf_token %}
+        {% if messages %}
+        <div role="alert">
+          {% for message in messages %} {{ message }} {% endfor %}
+        </div>
+        {% endif %}
         {{ form }}
         <button>Save</button>
     </form>

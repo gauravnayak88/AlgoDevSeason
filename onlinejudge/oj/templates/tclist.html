@@ -19,6 +19,9 @@
     <ul>
     {% for tc in cases %}
         <li>
+            {% if tc.is_sample %}
+                <b>(sample)</b>
+            {% endif %}
             <p>{{ tc.input }}</p>
             <p>{{ tc.output }}</p>
             {% if user == tc.written_by %}

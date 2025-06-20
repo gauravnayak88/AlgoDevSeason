@@ -10,6 +10,7 @@ LANGUAGES=[('C++', 'C++'), ('Java', 'Java'), ('Python', 'Python')]
 class Profile(models.Model):
     role=models.CharField(choices=ROLES, default='student')
     user=models.OneToOneField(User, on_delete=models.CASCADE)
+    join_date=models.DateField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.username} {self.role}"
@@ -23,6 +24,7 @@ class Problem(models.Model):
     statement=models.TextField(blank=True)
     name=models.CharField()
     difficulty=models.CharField(choices=DIFFICULTY)
+    date_added=models.DateField(auto_now_add=True)
 
     def __str__(self):
         return self.name
@@ -41,8 +43,10 @@ class Solution(models.Model):
 class TestCase(models.Model):
     input=models.TextField()
     output=models.TextField()
-    problem=models.ForeignKey("Problem", on_delete=models.CASCADE)
+    problem=models.ForeignKey("Problem", on_delete=models.CASCADE, related_name="testcases")
     written_by=models.ForeignKey(User, on_delete=models.CASCADE)
+    contributed_on=models.DateField(auto_now_add=True)
+    is_sample=models.BooleanField(default=False)
 
     def __str__(self):
         return self.input

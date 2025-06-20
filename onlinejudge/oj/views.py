@@ -14,7 +14,20 @@ def dashboard(request):
     return render(request, "dashboard.html")
 
 def profile(request):
-    return render(request, "profile.html")
+     # Filter user's accepted solutions
+    solutions = Solution.objects.filter(written_by=request.user, verdict="accepted")
+    
+    # Extract unique problem instances
+    problems_solved = Problem.objects.filter(
+        id__in=solutions.values_list('problem_id', flat=True).distinct()
+    )
+
+    context = {
+        'problems_solved': problems_solved,
+        'solutions': solutions,
+    }
+
+    return render(request, "profile.html", context)
 
 def problist(request):
     problems=Problem.objects.all()
@@ -140,6 +153,10 @@ def add_testcase(request, pk):
         form = TestCaseForm(request.POST)
         if form.is_valid():
             tc=form.save(commit=False)
+            Tc=TestCase.objects.filter(input=tc.input)
+            if Tc.exists():
+                messages.info(request, 'Test case with given input already exists')
+                return redirect(f"/addtestcase/{pk}")
             tc.problem=Problem.objects.get(pk=pk)
             tc.written_by=request.user
             tc.save()
@@ -199,6 +216,12 @@ def add_solution(request, pid):
 
         return redirect(f'/probdisp/{pid}')
     
+def mysolutions_list(request, pid):
+    problem=Problem.objects.get(pk=pid)
+    solutions=Solution.objects.filter(problem=problem, written_by=request.user)
+    context={"solutions":solutions}
+    return render(request, "sollist.html", context)
+
 def solution_disp(request, sid):
     solution=Solution.objects.get(pk=sid)
 

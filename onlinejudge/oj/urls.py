@@ -19,5 +19,6 @@ urlpatterns = [
     path("testcaselist/<int:pk>", views.testcase_list, name="testcase-list"),
     path("addsolution/<int:pid>", views.add_solution, name="add-solution"),
     path("solutionlist/<int:pid>", views.solution_list, name="solution-list"),
+    path("mysolutionslist/<int:pid>", views.mysolutions_list, name="mysolutions-list"),
     path("solutiondisp/<int:sid>", views.solution_disp, name="solution-disp"),
 ]
