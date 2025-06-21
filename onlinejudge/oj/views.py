@@ -7,6 +7,7 @@ from .models import Profile, Problem, ProblemForm, TestCase, TestCaseForm, Solut
 from django.db.models import Q
 from django.http import HttpResponseForbidden, JsonResponse
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 #DRF
 from rest_framework.decorators import api_view
@@ -18,6 +19,10 @@ from .serializers import ProblemSerializer
 class ProblemViewSet(viewsets.ModelViewSet):
     queryset = Problem.objects.all()
     serializer_class = ProblemSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(written_by=self.request.user)
 
 #DRF-React view
 @api_view(['GET'])

@@ -3,8 +3,12 @@ from rest_framework import serializers
 from .models import Problem
 
 class ProblemSerializer(serializers.ModelSerializer):
-    written_by = serializers.CharField(source='written_by.username')
+    written_by = serializers.SerializerMethodField()
     
     class Meta:
         model = Problem
-        fields = '__all__'
+        fields = ['id', 'name', 'statement', 'difficulty', 'written_by']
+        read_only_fields = ['written_by']
+
+    def get_written_by(self, obj):
+        return obj.written_by.username

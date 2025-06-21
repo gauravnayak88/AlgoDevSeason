@@ -2,18 +2,20 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import API from './api';
 
 function ProblemList() {
     const [problems, setProblems] = useState([])
 
     useEffect(() => {
-        axios.get('http://localhost:8000/api/problems/')
+        API.get('/problems/')
             .then(res => setProblems(res.data))
             .catch(err => console.log(err));
     }, [])
     return (
         <div>
             <h2>Problems</h2>
+            <Link to={'/addproblem'}><button>Contribute a problem</button></Link>
             <ul>
                 {problems.map(p => (
                     <li key={p.id}>
