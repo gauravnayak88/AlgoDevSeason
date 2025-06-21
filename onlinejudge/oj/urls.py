@@ -3,6 +3,11 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
+    # DRF-React URL'S
+    path('api/problems/', views.problem_list_api, name='problem-list-api'),
+    path('api/problems/<int:pk>', views.problem_detail_api, name='api-problem-detail'),
+
+    # HTML URL's
     path("", views.dashboard, name="dashboard"),
     path("problist/", views.problist, name="problist"),
     path("profile/", views.profile, name="profile"),

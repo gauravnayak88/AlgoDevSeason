@@ -5,10 +5,41 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Profile, Problem, ProblemForm, TestCase, TestCaseForm, Solution, SolutionForm, RegisterForm
 from django.db.models import Q
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
+from rest_framework import viewsets
+
+#DRF
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .serializers import ProblemSerializer
 
 # Create your views here.
 
+class ProblemViewSet(viewsets.ModelViewSet):
+    queryset = Problem.objects.all()
+    serializer_class = ProblemSerializer
+
+#DRF-React view
+@api_view(['GET'])
+def problem_list_api(request):
+    problems = Problem.objects.all()
+    serializer = ProblemSerializer(problems, many=True)
+    return Response(serializer.data)
+
+#Another DRF-React view
+def problem_detail_api(request, pk):
+    try:
+        problem = Problem.objects.get(pk=pk)
+        data = {
+            "id": problem.id,
+            "name": problem.name,
+            "statement": problem.statement,
+            "difficulty": problem.difficulty,
+            "written_by": problem.written_by.username,
+        }
+        return JsonResponse(data)
+    except Problem.DoesNotExist:
+        return JsonResponse({"error": "Problem not found"}, status=404)
 
 def dashboard(request):
     return render(request, "dashboard.html")

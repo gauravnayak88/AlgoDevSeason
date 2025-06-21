@@ -19,5 +19,8 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('oj.urls')),
+    path('api/', include('oj.api_urls')),  # include app API routes here
+    path('', include('oj.urls')),          # app HTML pages here
+    path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls.jwt')),  # for JWT endpoints
 ]
