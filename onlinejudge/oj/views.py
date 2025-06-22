@@ -12,10 +12,11 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 #DRF
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import ProblemSerializer
+from .serializers import ProblemSerializer, SolutionSerializer
 
 # Create your views here.
 
+# Class based views
 class ProblemViewSet(viewsets.ModelViewSet):
     queryset = Problem.objects.all()
     serializer_class = ProblemSerializer
@@ -23,6 +24,21 @@ class ProblemViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(written_by=self.request.user)
+
+class SolutionViewSet(viewsets.ModelViewSet):
+    queryset = Solution.objects.all()
+    serializer_class = SolutionSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(written_by=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print(serializer.errors)  # 👈 this will show the exact issue
+            return Response(serializer.errors, status=400)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=201)
 
 #DRF-React view
 @api_view(['GET'])

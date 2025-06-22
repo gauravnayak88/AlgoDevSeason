@@ -7,6 +7,7 @@ import Dashboard from './Dashboard';
 import ProblemList from './ProblemList';
 import ProblemDetail from './ProblemDetail';
 import AddProblem from './AddProblem';
+import EditProblem from './EditProblem';
 
 import './App.css'
 
@@ -22,6 +23,7 @@ function App() {
         <Route path='/register' element={<Register />} />
         <Route path='/problems' element={<ProblemList />} />
         <Route path='/problems/:id' element={<ProblemDetail />} />
+        <Route path='/problems/:id/edit' element={<EditProblem />} />
         <Route path='/addproblem' element={<AddProblem />} />
       </Routes>
     </Router>

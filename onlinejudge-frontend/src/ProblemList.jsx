@@ -8,7 +8,7 @@ function ProblemList() {
     const [problems, setProblems] = useState([])
 
     useEffect(() => {
-        API.get('/problems/')
+        API.get('api/problems/')
             .then(res => setProblems(res.data))
             .catch(err => console.log(err));
     }, [])

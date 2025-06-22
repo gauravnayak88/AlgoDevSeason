@@ -4,7 +4,7 @@ from django import forms
 
 DIFFICULTY=[("hard","Hard"), ("easy","Easy"), ("medium", "Medium")]
 ROLES=[('student', 'Student'),('staff', 'Staff')]
-LANGUAGES=[('C++', 'C++'), ('Java', 'Java'), ('Python', 'Python')]
+LANGUAGES=[('cpp', 'C++'), ('java', 'Java'), ('python', 'Python')]
 
 # Create your models here.
 class Profile(models.Model):
