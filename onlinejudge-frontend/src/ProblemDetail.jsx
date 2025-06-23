@@ -55,6 +55,7 @@ function ProblemDetail() {
             <button onClick={() => navigate(`/problems/${id}/edit`)}>Edit</button>
             <button onClick={handleDelete}>Delete</button>
             <p>{problem.statement}</p>
+            <Link to={`/problems/${problem.id}/solutions`}><button>View Submissions</button></Link>
             <form onSubmit={handleSubmit}>
                 <h3>Submit your solution</h3>
 

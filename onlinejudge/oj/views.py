@@ -30,7 +30,7 @@ class SolutionViewSet(viewsets.ModelViewSet):
     serializer_class = SolutionSerializer
 
     def perform_create(self, serializer):
-        serializer.save(written_by=self.request.user)
+        serializer.save(written_by=self.request.user, verdict="accepted")
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -52,6 +52,12 @@ def user_profile(request):
 def problem_list_api(request):
     problems = Problem.objects.all()
     serializer = ProblemSerializer(problems, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def solution_list_api(request, pk):
+    solutions = Solution.objects.filter(problem=pk)
+    serializer = SolutionSerializer(solutions, many=True)
     return Response(serializer.data)
 
 #Another DRF-React view
