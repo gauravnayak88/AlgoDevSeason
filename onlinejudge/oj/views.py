@@ -6,13 +6,13 @@ from django.contrib import messages
 from .models import Profile, Problem, ProblemForm, TestCase, TestCaseForm, Solution, SolutionForm, RegisterForm
 from django.db.models import Q
 from django.http import HttpResponseForbidden, JsonResponse
-from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 #DRF
-from rest_framework.decorators import api_view
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from .serializers import ProblemSerializer, SolutionSerializer
+from .serializers import ProfileSerializer, ProblemSerializer, SolutionSerializer
 
 # Create your views here.
 
@@ -39,6 +39,13 @@ class SolutionViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=400)
         self.perform_create(serializer)
         return Response(serializer.data, status=201)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_profile(request):
+    profile = Profile.objects.get(user=request.user)
+    serializer = ProfileSerializer(profile)
+    return Response(serializer.data)
 
 #DRF-React view
 @api_view(['GET'])

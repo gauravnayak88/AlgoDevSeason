@@ -25,7 +25,7 @@ function Navbar() {
             <button>Discuss</button>
             {isAuthenticated ? 
             (<>
-                <button>Profile</button>
+                <Link to={'/profile'}><button>Profile</button></Link>
                 <button onClick={logout}>Logout</button>
             </>):(
                 <Link to="/login"><button>Login</button></Link>

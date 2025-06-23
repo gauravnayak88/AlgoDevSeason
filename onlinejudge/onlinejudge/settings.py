@@ -50,6 +50,13 @@ REST_FRAMEWORK = {
     ),
 }
 
+# ?
+DJOSER = {
+    "SERIALIZERS": {
+        "user_create": "oj.serializers.CustomUserCreateSerializer",
+    }
+}
+
 # JWT settings (optional tweaks)
 # ?????
 from datetime import timedelta

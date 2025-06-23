@@ -4,7 +4,7 @@ import API from "./api";
 import { useNavigate } from "react-router-dom";
 
 function Register() {
-    const [form, setForm] = useState({ username: "", email: "", password: "" });
+    const [form, setForm] = useState({ username: "", email: "", password: "", role: "student" });
     const [message, setMessage] = useState("");
     const navigate = useNavigate()
     const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -33,6 +33,10 @@ function Register() {
                 <input name="username" placeholder="Username" onChange={handleChange} />
                 <input name="email" placeholder="Email" onChange={handleChange} />
                 <input name="password" type="password" placeholder="Password" onChange={handleChange} />
+                <select name="role" onChange={handleChange}>
+                    <option value="student">Student</option>
+                    <option value="staff">Staff</option>
+                </select>
                 <button>Register</button>
             </form>
             <p>{message}</p>
