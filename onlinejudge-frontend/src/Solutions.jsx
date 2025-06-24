@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import API from "./api";
 
 function Solutions() {
@@ -23,10 +23,11 @@ function Solutions() {
             solutions.map((sol)=> 
             <li key={sol.id}>
                 <p>Language: {sol.language}</p>
-                {/* <p>Code: {sol.code}</p> */}
-                <p>Submitted By{sol.written_by}: </p>
-                <p>Submitted At{sol.submitted_at}: </p>
                 <p>Verdict: {sol.verdict}</p>
+                {/* <p>Code: {sol.code}</p> */}
+                <Link to={`/solutions/${sol.id}`}><button>View</button></Link>
+                <p>Submitted By {sol.written_by}: </p>
+                <p>Submitted At {sol.submitted_at}: </p>
             </li>)
         }
         </ul>

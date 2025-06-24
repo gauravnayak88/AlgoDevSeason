@@ -4,16 +4,17 @@ import API from "./api";
 
 function Profile() {
     const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(()=> {
         API.get('/api/profile/')
         .then((res)=> {
             setProfile(res.data)
-        }).catch(err=>{console.log(err)})
+        }).catch(err=>{console.log(err)}).finally(()=> {setLoading(false)})
     }, [])
 
 
-    if (!profile) return <p>Loading... </p>
+    if (!profile || loading) return <p>Loading... </p>
 
     return (
     <div>

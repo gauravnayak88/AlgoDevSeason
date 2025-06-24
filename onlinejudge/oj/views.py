@@ -8,11 +8,12 @@ from django.db.models import Q
 from django.http import HttpResponseForbidden, JsonResponse
 
 #DRF
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from .serializers import ProfileSerializer, ProblemSerializer, SolutionSerializer
+from .permissions import IsStaffUser
 
 # Create your views here.
 
@@ -22,12 +23,20 @@ class ProblemViewSet(viewsets.ModelViewSet):
     serializer_class = ProblemSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
+    def get_permissions(self):
+        if self.action in ['create']:
+            return [IsStaffUser()]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            return [permissions.IsAuthenticated(), IsStaffUser()]
+        return [permissions.AllowAny()]  # Read-only access to everyone
+
     def perform_create(self, serializer):
         serializer.save(written_by=self.request.user)
 
 class SolutionViewSet(viewsets.ModelViewSet):
     queryset = Solution.objects.all()
     serializer_class = SolutionSerializer
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(written_by=self.request.user, verdict="accepted")
@@ -70,6 +79,20 @@ def problem_detail_api(request, pk):
             "statement": problem.statement,
             "difficulty": problem.difficulty,
             "written_by": problem.written_by.username,
+        }
+        return JsonResponse(data)
+    except Problem.DoesNotExist:
+        return JsonResponse({"error": "Problem not found"}, status=404)
+    
+def solution_detail_api(request, pk):
+    try:
+        solution = Solution.objects.get(pk=pk)
+        data = {
+            "id": solution.id,
+            "language": solution.language,
+            "code": solution.code,
+            "verdict": solution.verdict,
+            "submitted_at": solution.submitted_at,
         }
         return JsonResponse(data)
     except Problem.DoesNotExist:

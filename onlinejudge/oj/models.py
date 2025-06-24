@@ -8,7 +8,7 @@ LANGUAGES=[('cpp', 'C++'), ('java', 'Java'), ('python', 'Python')]
 
 # Create your models here.
 class Profile(models.Model):
-    role=models.CharField(choices=ROLES, default='student')
+    role=models.CharField(choices=ROLES, default='student', max_length=10)
     user=models.OneToOneField(User, on_delete=models.CASCADE)
     join_date=models.DateField(auto_now_add=True)
 
@@ -22,8 +22,8 @@ class Problem(models.Model):
         related_name="problems"
     )
     statement=models.TextField(blank=True)
-    name=models.CharField()
-    difficulty=models.CharField(choices=DIFFICULTY)
+    name=models.CharField(max_length=50)
+    difficulty=models.CharField(choices=DIFFICULTY, max_length=10)
     date_added=models.DateField(auto_now_add=True)
 
     def __str__(self):
@@ -31,10 +31,10 @@ class Problem(models.Model):
 
 class Solution(models.Model):
     problem=models.ForeignKey("Problem", on_delete=models.CASCADE)
-    language=models.CharField(choices=LANGUAGES)
+    language=models.CharField(choices=LANGUAGES, max_length=20)
     code=models.TextField(blank=True)
     written_by=models.ForeignKey(User, on_delete=models.CASCADE)
-    verdict=models.CharField()
+    verdict=models.CharField(max_length=20)
     submitted_at=models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

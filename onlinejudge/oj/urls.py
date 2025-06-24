@@ -7,6 +7,7 @@ urlpatterns = [
     path('api/problems/', views.problem_list_api, name='problem-list-api'),
     path('api/problems/<int:pk>', views.problem_detail_api, name='api-problem-detail'),
     path('api/problems/<int:pk>/solutions', views.solution_list_api, name='solution-list-api'),
+    path('api/solutions/<int:pk>', views.solution_detail_api, name='api-solution-detail'),
     path("api/profile/", views.user_profile, name="user-profile"),
 
     # HTML URL's
