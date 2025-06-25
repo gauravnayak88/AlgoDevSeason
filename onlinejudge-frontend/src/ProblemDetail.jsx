@@ -20,11 +20,11 @@ function ProblemDetail() {
         setIsAuthenticated(!!token);  // true if token exists
     }, []);
 
-    useEffect(()=> {
+    useEffect(() => {
         if (!isAuthenticated) return;
         API.get(`/api/profile/`)
-        .then(res=>{setProfile(res.data)})
-        .catch(err=>{console.log(err)})
+            .then(res => { setProfile(res.data) })
+            .catch(err => { console.log(err) })
     }, [isAuthenticated])
 
     useEffect(() => {
@@ -54,10 +54,11 @@ function ProblemDetail() {
             language: language,
             code: code,
         })
-        .then(() => {setMessage("Submitted successfully!")
-                navigate('/problems')
-        })
-        .catch(() => setMessage("Submission failed."));
+            .then(() => {
+                setMessage("Submitted successfully!")
+                navigate(`/problems/${id}`)
+            })
+            .catch(() => setMessage("Submission failed."));
     };
 
     const handleDelete = () => {
@@ -71,43 +72,59 @@ function ProblemDetail() {
     if (!problem) return <p>Loading</p>;
 
     return (
-        <div>
-            <h2>ProblemDetails</h2>
-            <h2>{problem.name}</h2>
-            <p><strong>Difficulty: </strong>{problem.difficulty}</p>
-            <p><em>Contributed by {problem.written_by}</em></p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'flex-start' }}>
+            {/* Left Column - Problem Details */}
+            <div style={{ flex: '1 1 45%', minWidth: '300px' }}>
+                <h2>{problem.name}</h2>
+                <p><strong>Difficulty: </strong>{problem.difficulty}</p>
+                <p><em>Contributed by {problem.written_by}</em></p>
 
-            {isAuthenticated && profile?.role === 'staff' && (
-            <>
-                <button onClick={() => navigate(`/problems/${id}/edit`)}>Edit</button>
-                <button onClick={handleDelete}>Delete</button>
-            </>
-            )}
-            <p>{problem.statement}</p>
-            <Link to={`/problems/${problem.id}/solutions`}><button>View Submissions</button></Link>
-            <form onSubmit={handleSubmit}>
-                <h3>Submit your solution</h3>
+                {isAuthenticated && profile?.role === 'staff' && (
+                    <>
+                        <button onClick={() => navigate(`/problems/${id}/edit`)}>Edit</button>
+                        <button onClick={handleDelete}>Delete</button>
+                    </>
+                )}
+                <div style={{
+                    whiteSpace: 'pre-wrap',  // preserve line breaks
+                    wordWrap: 'break-word',  // break long words
+                    overflowWrap: 'break-word', // ensure wrapping even for long strings
+                    backgroundColor: '#f9f9f9',
+                    padding: '1rem',
+                    borderRadius: '5px',
+                    marginTop: '1rem'
+                }}>{problem.statement}</div>
+                <Link to={`/problems/${problem.id}/solutions`}><button>View Submissions</button></Link>
+                <Link to={`/problems/${problem.id}/testcases`}><button>View TestCases</button></Link>
+            </div>
 
-                <label>Select Language: </label>
-                <select value={language} onChange={e => setLanguage(e.target.value)}>
-                    <option value="python">Python</option>
-                    <option value="cpp">C++</option>
-                    <option value="java">Java</option>
-                    {/* Match the keys from your LANGUAGES choices in Django */}
-                </select>
-                <br /><br />
+            {/* Right Column - Submission Form */}
+            <div style={{ flex: '1 1 45%', minWidth: '300px' }}>
+                <form onSubmit={handleSubmit}>
+                    <h3>Submit your solution</h3>
 
-                <textarea
-                    rows={10}
-                    cols={60}
-                    placeholder="Write your code here..."
-                    value={code}
-                    onChange={e => setCode(e.target.value)}
-                    required
-                />
-                <br />
-                <button type="submit">Submit</button>
-            </form>
+                    <label>Select Language: </label>
+                    <select value={language} onChange={e => setLanguage(e.target.value)}>
+                        <option value="python">Python</option>
+                        <option value="cpp">C++</option>
+                        <option value="java">Java</option>
+                        {/* Match the keys from your LANGUAGES choices in Django */}
+                    </select>
+                    <br /><br />
+
+                    <textarea
+                        rows={10}
+                        cols={50}
+                        placeholder="Write your code here..."
+                        value={code}
+                        onChange={e => setCode(e.target.value)}
+                        required
+                    />
+                    <br />
+                    <p>{message}</p>
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
         </div>
     );
 }

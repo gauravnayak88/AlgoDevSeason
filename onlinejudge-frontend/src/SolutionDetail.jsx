@@ -33,7 +33,15 @@ function SolutionDetail () {
         <p>Language: {solution.language}</p>
         <p>Verdict: {solution.verdict}</p>
         <p>Code: </p>
-        <p>{solution.code}</p>
+        <div style={{
+                    whiteSpace: 'pre-wrap',  // preserve line breaks
+                    wordWrap: 'break-word',  // break long words
+                    overflowWrap: 'break-word', // ensure wrapping even for long strings
+                    backgroundColor: '#f9f9f9',
+                    padding: '1rem',
+                    borderRadius: '5px',
+                    marginTop: '1rem'
+        }}>{solution.code}</div>
         <p>Written By: {solution.written_by}</p>
         <p>Submitted At: {formattedDate}</p>
         </div>

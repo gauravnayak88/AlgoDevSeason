@@ -4,7 +4,7 @@ import axios from "axios";
 import API from "./api";
 import { useNavigate } from "react-router-dom";
 
-function Login() {
+function Login({setIsAuthenticated}) {
   const [form, setForm] = useState({ username: "", password: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate()
@@ -17,6 +17,7 @@ function Login() {
       .then(res => {
         localStorage.setItem("access", res.data.access);
         localStorage.setItem("refresh", res.data.refresh);
+        setIsAuthenticated(true)
         setMessage("Login successful!");
         navigate('/')
       })

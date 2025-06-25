@@ -22,7 +22,7 @@ function AddProblem() {
       return;
     }
 
-    API.post('/problems/', form)
+    API.post('/api/problems/', form)
       .then(() => setMessage("Problem added successfully!"))
       .catch((err) => {
         console.error(err);

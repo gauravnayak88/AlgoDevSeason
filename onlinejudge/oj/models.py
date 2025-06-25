@@ -19,7 +19,7 @@ class Problem(models.Model):
     written_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="problems"
+        related_name="problems",
     )
     statement=models.TextField(blank=True)
     name=models.CharField(max_length=50)
@@ -49,7 +49,16 @@ class TestCase(models.Model):
     is_sample=models.BooleanField(default=False)
 
     def __str__(self):
-        return self.input
+        return f"{self.input} {self.problem.id}"
+    
+class Discussion(models.Model):
+    title=models.TextField()
+    content=models.TextField()
+    written_by=models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.written_by}-{self.title}"
+
     
 class RegisterForm(forms.Form):
     username = forms.CharField(max_length=150)

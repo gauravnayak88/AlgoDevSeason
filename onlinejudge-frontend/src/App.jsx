@@ -13,6 +13,11 @@ import EditProblem from './EditProblem';
 import Profile from './Profile';
 import Solutions from './Solutions';
 import SolutionDetail from './SolutionDetail';
+import TestCases from './TestCases';
+import Contests from './Contests';
+import Discuss from './Discuss';
+import DiscussionDetails from './DiscussionDetails';
+import Explore from './Explore';
 
 
 import './App.css'
@@ -32,7 +37,7 @@ function App() {
     } else {
       setProfile(null);
     }
-  }, []);
+  }, [isAuthenticated]);
 
 
   {
@@ -52,18 +57,23 @@ function App() {
 
   return (
     <Router>
-      <Navbar profile={profile} isAuthenticated={isAuthenticated} />
+      <Navbar profile={profile} isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated}/>
       <Routes>
         <Route path='' element={<Dashboard />} />
-        <Route path='/login' element={<Login />} />
+        <Route path='/login' element={<Login setIsAuthenticated={setIsAuthenticated}/>} />
         <Route path='/profile' element={<Profile />} />
         <Route path='/register' element={<Register />} />
         <Route path='/problems' element={<ProblemList />} />
         <Route path='/problems/:id' element={<ProblemDetail />} />
         <Route path='/problems/:id/edit' element={<EditProblem />} />
         <Route path='/problems/:id/solutions' element={<Solutions />} />
+        <Route path='/problems/:id/testcases' element={<TestCases />} />
         <Route path='/solutions/:id' element={<SolutionDetail />} />
         <Route path='/addproblem' element={<AddProblem />} />
+        <Route path='/contests' element={<Contests />} />
+        <Route path='/discuss' element={<Discuss />} />
+        <Route path='/discuss/:id' element={<DiscussionDetails />} />
+        <Route path='/explore' element={<Explore />} />
       </Routes>
     </Router>
   )

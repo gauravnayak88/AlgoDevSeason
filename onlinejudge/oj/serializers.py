@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Profile, Problem, Solution
+from .models import Profile, Problem, TestCase, Solution, Discussion
 from django.contrib.auth.models import User
 
 class CustomUserCreateSerializer(serializers.ModelSerializer):
@@ -44,9 +44,31 @@ class ProblemSerializer(serializers.ModelSerializer):
     def get_written_by(self, obj):
         return obj.written_by.username
     
+class TestCaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= TestCase
+        fields = ['id', 'input', 'output', 'problem', 'written_by', 'contributed_on', 'is_sample']
+        read_only_fields = ['written_by', 'contributed_by']
 
 class SolutionSerializer(serializers.ModelSerializer):
+    written_by = serializers.SerializerMethodField()
+
     class Meta:
         model = Solution
         fields = ['id', 'problem', 'language', 'code', 'written_by', 'verdict', 'submitted_at']
         read_only_fields = ['written_by', 'verdict', 'submitted_at']
+
+    def get_written_by(self, obj):
+        return obj.written_by.username
+    
+class DiscussionSerializer(serializers.ModelSerializer):
+    written_by = serializers.SerializerMethodField() #?
+
+    class Meta:
+        model= Discussion
+        fields = ['id', 'title', 'content', 'written_by']
+        read_only_fields = ['written_by']
+
+
+    def get_written_by(self, obj):
+        return obj.written_by.username

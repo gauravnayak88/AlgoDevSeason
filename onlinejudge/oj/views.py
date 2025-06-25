@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Profile, Problem, ProblemForm, TestCase, TestCaseForm, Solution, SolutionForm, RegisterForm
+from .models import Profile, Problem, ProblemForm, TestCase, TestCaseForm, Solution, Discussion, SolutionForm, RegisterForm
 from django.db.models import Q
 from django.http import HttpResponseForbidden, JsonResponse
 
@@ -12,7 +12,7 @@ from rest_framework import viewsets, permissions
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from .serializers import ProfileSerializer, ProblemSerializer, SolutionSerializer
+from .serializers import ProfileSerializer, ProblemSerializer, TestCaseSerializer, SolutionSerializer, DiscussionSerializer
 from .permissions import IsStaffUser
 
 # Create your views here.
@@ -41,13 +41,30 @@ class SolutionViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(written_by=self.request.user, verdict="accepted")
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            print(serializer.errors)  # 👈 this will show the exact issue
-            return Response(serializer.errors, status=400)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=201)
+    # def create(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     if not serializer.is_valid():
+    #         print(serializer.errors)  # 👈 this will show the exact issue
+    #         return Response(serializer.errors, status=400)
+    #     self.perform_create(serializer)
+    #     return Response(serializer.data, status=201)
+    
+class TestCaseViewSet(viewsets.ModelViewSet):
+    queryset = Solution.objects.all()
+    serializer_class = TestCaseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(written_by=self.request.user)
+
+class DiscussionViewSet(viewsets.ModelViewSet):
+    queryset = Solution.objects.all()
+    serializer_class = DiscussionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(written_by=self.request.user)
+
     
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -67,6 +84,18 @@ def problem_list_api(request):
 def solution_list_api(request, pk):
     solutions = Solution.objects.filter(problem=pk)
     serializer = SolutionSerializer(solutions, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def testcase_list_api(request, pk):
+    testcases = TestCase.objects.filter(problem=pk)
+    serializer = TestCaseSerializer(testcases, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def discussion_list_api(request):
+    discussions = Discussion.objects.all()
+    serializer = DiscussionSerializer(discussions, many=True)
     return Response(serializer.data)
 
 #Another DRF-React view
@@ -92,11 +121,25 @@ def solution_detail_api(request, pk):
             "language": solution.language,
             "code": solution.code,
             "verdict": solution.verdict,
+            "written_by": solution.written_by.username,
             "submitted_at": solution.submitted_at,
         }
         return JsonResponse(data)
     except Problem.DoesNotExist:
-        return JsonResponse({"error": "Problem not found"}, status=404)
+        return JsonResponse({"error": "Solution not found"}, status=404)
+    
+def discussion_detail_api(request, pk):
+    try:
+        discussion = Discussion.objects.get(pk=pk)
+        data = {
+            'id':discussion.id,
+            'title':discussion.title,
+            'content':discussion.content,
+            'written_by':discussion.written_by.username
+        }
+        return JsonResponse(data)
+    except:
+        return JsonResponse({"error", "Discussion not found"}, status=404)
 
 def dashboard(request):
     return render(request, "dashboard.html")

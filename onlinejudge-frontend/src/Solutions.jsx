@@ -26,8 +26,8 @@ function Solutions() {
                 <p>Verdict: {sol.verdict}</p>
                 {/* <p>Code: {sol.code}</p> */}
                 <Link to={`/solutions/${sol.id}`}><button>View</button></Link>
-                <p>Submitted By {sol.written_by}: </p>
-                <p>Submitted At {sol.submitted_at}: </p>
+                <p>Submitted By {sol.written_by} </p>
+                <p>Submitted At {sol.submitted_at} </p>
             </li>)
         }
         </ul>
