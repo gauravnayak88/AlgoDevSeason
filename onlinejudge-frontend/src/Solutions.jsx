@@ -15,20 +15,33 @@ function Solutions() {
 
     if (!solutions) return <p>Loading...</p>
 
+    const options = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+    };
+
     return (
     <div>
         <h2>Solutions</h2>
         <ul>
         {
-            solutions.map((sol)=> 
+            solutions.map((sol)=> {
+                const formattedDate = new Date(sol.submitted_at).toLocaleString("en-IN", options);
+
+                return (
             <li key={sol.id}>
                 <p>Language: {sol.language}</p>
                 <p>Verdict: {sol.verdict}</p>
                 {/* <p>Code: {sol.code}</p> */}
                 <Link to={`/solutions/${sol.id}`}><button>View</button></Link>
                 <p>Submitted By {sol.written_by} </p>
-                <p>Submitted At {sol.submitted_at} </p>
+                <p>Submitted At {formattedDate} </p>
             </li>)
+            })
         }
         </ul>
     </div>

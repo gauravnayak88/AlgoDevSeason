@@ -33,6 +33,8 @@ class Solution(models.Model):
     problem=models.ForeignKey("Problem", on_delete=models.CASCADE)
     language=models.CharField(choices=LANGUAGES, max_length=20)
     code=models.TextField(blank=True)
+    input_data=models.TextField(blank=True, default='')
+    output_data=models.TextField(blank=True, default='')
     written_by=models.ForeignKey(User, on_delete=models.CASCADE)
     verdict=models.CharField(max_length=20)
     submitted_at=models.DateTimeField(auto_now_add=True)
@@ -55,6 +57,7 @@ class Discussion(models.Model):
     title=models.TextField()
     content=models.TextField()
     written_by=models.ForeignKey(User, on_delete=models.CASCADE)
+    posted_on=models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.written_by}-{self.title}"

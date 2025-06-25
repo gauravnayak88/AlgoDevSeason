@@ -13,6 +13,7 @@ function ProblemDetail() {
     const [code, setCode] = useState("");
     const [message, setMessage] = useState("");
     const [language, setLanguage] = useState("python");
+    const [input, setInput] = useState("");
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -53,6 +54,7 @@ function ProblemDetail() {
             problem: id,
             language: language,
             code: code,
+            input_data: input,
         })
             .then(() => {
                 setMessage("Submitted successfully!")
@@ -121,6 +123,8 @@ function ProblemDetail() {
                         required
                     />
                     <br />
+                    <h3>Input: </h3>
+                    <textarea onChange={e => setInput(e.target.value)}/>
                     <p>{message}</p>
                     <button type="submit">Submit</button>
                 </form>

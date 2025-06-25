@@ -18,6 +18,7 @@ import Contests from './Contests';
 import Discuss from './Discuss';
 import DiscussionDetails from './DiscussionDetails';
 import Explore from './Explore';
+import PostDiscussion from './PostDiscussion';
 
 
 import './App.css'
@@ -72,6 +73,7 @@ function App() {
         <Route path='/addproblem' element={<AddProblem />} />
         <Route path='/contests' element={<Contests />} />
         <Route path='/discuss' element={<Discuss />} />
+        <Route path='/discuss/post' element={<PostDiscussion />} />
         <Route path='/discuss/:id' element={<DiscussionDetails />} />
         <Route path='/explore' element={<Explore />} />
       </Routes>

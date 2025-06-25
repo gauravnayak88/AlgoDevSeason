@@ -66,7 +66,7 @@ class DiscussionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model= Discussion
-        fields = ['id', 'title', 'content', 'written_by']
+        fields = ['id', 'title', 'content', 'posted_on', 'written_by']
         read_only_fields = ['written_by']
 
 
