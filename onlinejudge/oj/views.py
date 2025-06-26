@@ -13,16 +13,22 @@ import subprocess
 from pathlib import Path
 
 #DRF
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from .serializers import ProfileSerializer, ProblemSerializer, TestCaseSerializer, SolutionSerializer, DiscussionSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import ProfileSerializer, ProblemSerializer, TestCaseSerializer, SolutionSerializer, DiscussionSerializer, EmailOrUsernameLoginSerializer
 from .permissions import IsStaffUser
 
 # Create your views here.
 
 # Class based views
+
+class EmailOrUsernameLoginView(TokenObtainPairView):
+    serializer_class = EmailOrUsernameLoginSerializer
+
+
 class ProblemViewSet(viewsets.ModelViewSet):
     queryset = Problem.objects.all()
     serializer_class = ProblemSerializer
@@ -103,6 +109,7 @@ def run_code(language, code, input_data):
                         [str(executable_path)],
                         stdin=input_file,
                         stdout=output_file,
+                        stderr=output_file,
                     )
     elif language == "python":
         # Code for executing Python script
@@ -112,6 +119,7 @@ def run_code(language, code, input_data):
                     ["python3", str(code_file_path)],
                     stdin=input_file,
                     stdout=output_file,
+                    stderr=output_file,
                 )
 
     # Read the output from the output file
@@ -120,14 +128,6 @@ def run_code(language, code, input_data):
 
     return output_data
 
-    # def create(self, request, *args, **kwargs):
-    #     serializer = self.get_serializer(data=request.data)
-    #     if not serializer.is_valid():
-    #         print(serializer.errors)  # 👈 this will show the exact issue
-    #         return Response(serializer.errors, status=400)
-    #     self.perform_create(serializer)
-    #     return Response(serializer.data, status=201)
-    
 class TestCaseViewSet(viewsets.ModelViewSet):
     queryset = Solution.objects.all()
     serializer_class = TestCaseSerializer
@@ -167,7 +167,7 @@ def solution_list_api(request, pk):
 
 @api_view(['GET'])
 def testcase_list_api(request, pk):
-    testcases = TestCase.objects.filter(problem=pk)
+    testcases = TestCase.objects.filter(problem=pk, is_sample=True)
     serializer = TestCaseSerializer(testcases, many=True)
     return Response(serializer.data)
 
@@ -176,6 +176,25 @@ def discussion_list_api(request):
     discussions = Discussion.objects.all()
     serializer = DiscussionSerializer(discussions, many=True)
     return Response(serializer.data)
+
+
+@api_view(['POST'])
+# @permission_classes([IsAuthenticated])  # Optional: only if login is required to run
+def run_code_api(request):
+    language = request.data.get("language")
+    code = request.data.get("code")
+    input_data = request.data.get("input_data", "")
+
+    if not all([language, code]):
+        return Response({"error": "Language and code are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        output = run_code(language, code, input_data)
+        return Response({"output": output})
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 #Another DRF-React view
 def problem_detail_api(request, pk):

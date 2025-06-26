@@ -28,7 +28,7 @@ function Login({setIsAuthenticated}) {
     <div>
       <h2>Login</h2>
       <form onSubmit={handleSubmit}>
-        <input name="username" placeholder="Username" onChange={handleChange} />
+        <input name="username" placeholder="Username or Email" onChange={handleChange} />
         <input name="password" type="password" placeholder="Password" onChange={handleChange} />
         <button>Login</button>
       </form>

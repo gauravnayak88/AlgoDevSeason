@@ -14,6 +14,7 @@ function ProblemDetail() {
     const [message, setMessage] = useState("");
     const [language, setLanguage] = useState("python");
     const [input, setInput] = useState("");
+    const [output, setOutput] = useState("");
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -39,6 +40,32 @@ function ProblemDetail() {
             .catch(err => console.error(err));
     }, [id]);
 
+    const handleRun = (e) => {
+        e.preventDefault()
+
+        // if (!isAuthenticated) {
+        //     alert("You need to login to run a code.");
+        //     navigate("/login");
+        //     return;
+        // }
+
+        API.post("/api/run", {
+            code: code,
+            language: language,
+            input_data: input
+        })
+            .then((res) => {
+                setOutput(res.data.output)
+                setMessage("Code executed successfully!");
+            })
+            .catch(err => {
+                console.error(err);
+                setOutput("Error executing code.");
+                setMessage("Execution failed.");
+            })
+
+    }
+
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -61,6 +88,7 @@ function ProblemDetail() {
                 navigate(`/problems/${id}`)
             })
             .catch(() => setMessage("Submission failed."));
+
     };
 
     const handleDelete = () => {
@@ -81,7 +109,7 @@ function ProblemDetail() {
                 <p><strong>Difficulty: </strong>{problem.difficulty}</p>
                 <p><em>Contributed by {problem.written_by}</em></p>
 
-                {isAuthenticated && profile?.role === 'staff' && (
+                {isAuthenticated && profile?.role === 'staff' && problem.written_by === profile.username && (
                     <>
                         <button onClick={() => navigate(`/problems/${id}/edit`)}>Edit</button>
                         <button onClick={handleDelete}>Delete</button>
@@ -97,7 +125,9 @@ function ProblemDetail() {
                     marginTop: '1rem'
                 }}>{problem.statement}</div>
                 <Link to={`/problems/${problem.id}/solutions`}><button>View Submissions</button></Link>
-                <Link to={`/problems/${problem.id}/testcases`}><button>View TestCases</button></Link>
+                {isAuthenticated && profile?.role === 'staff' &&
+                    <Link to={`/problems/${problem.id}/testcases`}><button>View TestCases</button></Link>
+                }
             </div>
 
             {/* Right Column - Submission Form */}
@@ -124,8 +154,23 @@ function ProblemDetail() {
                     />
                     <br />
                     <h3>Input: </h3>
-                    <textarea onChange={e => setInput(e.target.value)}/>
+                    <textarea onChange={e => setInput(e.target.value)} />
+                    {output && (
+                        <div style={{
+                             whiteSpace: 'pre-wrap',  // preserve line breaks
+                            wordWrap: 'break-word',  // break long words
+                            overflowWrap: 'break-word', // ensure wrapping even for long strings
+                            marginTop: '1rem',
+                            backgroundColor: '#eef',
+                            padding: '1rem',
+                            borderRadius: '5px'
+                        }}>
+                            <h4>Output:</h4>
+                            <p>{output}</p>
+                        </div>
+                    )}
                     <p>{message}</p>
+                    <button type="button" onClick={handleRun}>Run</button>
                     <button type="submit">Submit</button>
                 </form>
             </div>

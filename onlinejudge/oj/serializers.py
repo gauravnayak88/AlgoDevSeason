@@ -1,8 +1,13 @@
 # serializers.py
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.exceptions import AuthenticationFailed
 from .models import Profile, Problem, TestCase, Solution, Discussion
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from django.db.models import Q
+
 
 class CustomUserCreateSerializer(serializers.ModelSerializer):
     role = serializers.ChoiceField(choices=[("student", "Student"), ("staff", "Staff")], write_only=True)
@@ -27,6 +32,25 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
             "username": instance.username,
             "email": instance.email,
         }
+    
+
+class EmailOrUsernameLoginSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        username_or_email = attrs.get("username")
+        password = attrs.get("password")
+
+        user = User.objects.filter(Q(username=username_or_email) | Q(email=username_or_email)).first()
+
+        if user is None:
+            raise AuthenticationFailed("No user found with this username or email")
+
+        authenticated_user = authenticate(username=user.username, password=password)
+
+        if authenticated_user is None:
+            raise AuthenticationFailed("Incorrect password")
+
+        data = super().validate({"username": user.username, "password": password})
+        return data
     
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username')

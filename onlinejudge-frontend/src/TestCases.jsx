@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import API from "./api";
 import { useEffect, useState } from "react";
 
-function TestCases() {
+function TestCases({problem_title}) {
     const { id } = useParams();
     const [testCases, setTestCases]= useState();
 
@@ -20,7 +20,7 @@ function TestCases() {
     return (
         <div>
             <h1>Test Cases</h1>
-            <p>Problem: {id}</p>
+            <p>Problem: {problem_title}</p>
             <ul>
             {
                 testCases.map(tc => 

@@ -35,18 +35,24 @@ function EditProblem() {
     <div>
       <h2>Edit Problem</h2>
       <form onSubmit={handleSubmit}>
-        <input name="name" value={form.name} onChange={handleChange} required />
+        <label htmlFor="name">Name: </label><br/>
+        <input id="name" name="name" value={form.name} onChange={handleChange} required /><br/>
+        <label htmlFor="statement">Statement: </label><br/>
         <textarea
+          id="statement"
           name="statement"
           value={form.statement}
           onChange={handleChange}
           required
         />
-        <select name="difficulty" value={form.difficulty} onChange={handleChange}>
+        <br/>
+        <label htmlFor="difficulty">Difficult: </label><br/>
+        <select id="difficulty" name="difficulty" value={form.difficulty} onChange={handleChange}>
           <option value="Easy">Easy</option>
           <option value="Medium">Medium</option>
           <option value="Hard">Hard</option>
         </select>
+        <br/>
         <button type="submit">Update</button>
       </form>
     </div>

@@ -12,6 +12,8 @@ urlpatterns = [
     path('api/discuss/', views.discussion_list_api, name='discussion-list-api'),
     path('api/discuss/<int:pk>', views.discussion_detail_api, name='api-discussion-detail'),
     path("api/profile/", views.user_profile, name="user-profile"),
+    path("api/run", views.run_code_api, name='run-code-api'),
+    path("auth/jwt/create/", views.EmailOrUsernameLoginView.as_view(), name="custom_jwt_create"),
 
     # HTML URL's
     path("", views.dashboard, name="dashboard"),
