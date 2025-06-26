@@ -1,10 +1,13 @@
 # serializers.py
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from .models import Profile, Problem, TestCase, Solution, Discussion
 from django.contrib.auth.models import User
 
 class CustomUserCreateSerializer(serializers.ModelSerializer):
     role = serializers.ChoiceField(choices=[("student", "Student"), ("staff", "Staff")], write_only=True)
+    email= serializers.EmailField(required=True,
+        validators=[UniqueValidator(queryset=User.objects.all(), message="Email is already registered.")])
 
     class Meta:
         model = User
@@ -55,8 +58,8 @@ class SolutionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Solution
-        fields = ['id', 'problem', 'language', 'code', 'written_by', 'verdict', 'submitted_at']
-        read_only_fields = ['written_by', 'verdict', 'submitted_at']
+        fields = '__all__'
+        read_only_fields = ['written_by', 'verdict', 'submitted_at', 'output_data']
 
     def get_written_by(self, obj):
         return obj.written_by.username

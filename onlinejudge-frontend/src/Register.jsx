@@ -19,7 +19,7 @@ function Register() {
             .catch((error) => {
                 if (error.response && error.response.data) {
                     console.log(error.response.data);  // <-- shows exact field errors
-                    setMessage(JSON.stringify(error.response.data));
+                    setMessage((error.response.data['username']?(error.response.data['username']+" "):"")+(error.response.data['email']?error.response.data['email']:""));
                 } else {
                     setMessage("Registration failed.");
                 }
