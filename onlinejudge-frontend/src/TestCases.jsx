@@ -20,7 +20,7 @@ function TestCases({problem_title}) {
     return (
         <div>
             <h1>Test Cases</h1>
-            <p>Problem: {problem_title}</p>
+            <p>Problem: {testCases[0].problem}</p>
             <ul>
             {
                 testCases.map(tc => 

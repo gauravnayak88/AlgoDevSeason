@@ -49,20 +49,58 @@ class SolutionViewSet(viewsets.ModelViewSet):
     serializer_class = SolutionSerializer
     permission_classes = [IsAuthenticated]
 
-    def perform_create(self, serializer):
-        language = self.request.data.get("language")
-        code = self.request.data.get("code")
-        input_data = self.request.data.get("input_data", "")
-        print(language, code, input_data)
+    def create(self, request, *args, **kwargs):
+        language = request.data.get("language")
+        code = request.data.get("code")
+        problem_id = request.data.get("problem")
 
-        output = run_code(language, code, input_data)
+        if not all([language, code, problem_id]):
+            return Response({"error": "Missing fields"}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer.save(
-            written_by=self.request.user,
-            verdict="accepted",  # In future, you can determine this based on output
-            input_data=input_data,
-            output_data=output,
+        try:
+            problem = Problem.objects.get(pk=problem_id)
+        except Problem.DoesNotExist:
+            return Response({"error": "Problem not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        testcases = TestCase.objects.filter(problem=problem)
+        results = []
+        passed_count = 0
+
+        for tc in testcases:
+            output = run_code(language, code, tc.input)
+            actual = output.strip()
+            expected = tc.output.strip()
+
+            if actual == expected:
+                verdict = "Passed"
+                passed_count += 1
+            else:
+                verdict = "Failed"
+
+            results.append({
+                "input": tc.input,
+                "expected": expected,
+                "actual": actual,
+                "verdict": verdict
+            })
+
+        final_verdict = "Accepted" if passed_count == len(testcases) else "Wrong Answer"
+
+        solution = Solution.objects.create(
+            written_by=request.user,
+            problem=problem,
+            code=code,
+            language=language,
+            verdict=final_verdict,
         )
+
+        serializer = self.get_serializer(solution)
+        return Response({
+            "solution": serializer.data,
+            "verdict": final_verdict,
+            "results": results
+        }, status=status.HTTP_201_CREATED)
+
 
 def run_code(language, code, input_data):
     project_path = Path(settings.BASE_DIR)
@@ -167,7 +205,7 @@ def solution_list_api(request, pk):
 
 @api_view(['GET'])
 def testcase_list_api(request, pk):
-    testcases = TestCase.objects.filter(problem=pk, is_sample=True)
+    testcases = TestCase.objects.filter(problem=pk)
     serializer = TestCaseSerializer(testcases, many=True)
     return Response(serializer.data)
 

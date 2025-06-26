@@ -56,7 +56,7 @@ function ProblemDetail() {
         })
             .then((res) => {
                 setOutput(res.data.output)
-                setMessage("Code executed successfully!");
+                // setMessage("Code executed successfully!");
             })
             .catch(err => {
                 console.error(err);
@@ -83,12 +83,14 @@ function ProblemDetail() {
             code: code,
             input_data: input,
         })
-            .then(() => {
-                setMessage("Submitted successfully!")
-                navigate(`/problems/${id}`)
-            })
-            .catch(() => setMessage("Submission failed."));
-
+        .then(res => {
+        setMessage(`Verdict: ${res.data.verdict}`);
+        setOutput(JSON.stringify(res.data.results, null, 2)); // Optional: show detailed feedback
+        })
+        .catch(err => {
+            console.error(err);
+            setMessage("Submission failed.");
+        });
     };
 
     const handleDelete = () => {

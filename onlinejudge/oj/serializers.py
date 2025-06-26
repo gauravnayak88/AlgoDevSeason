@@ -72,6 +72,7 @@ class ProblemSerializer(serializers.ModelSerializer):
         return obj.written_by.username
     
 class TestCaseSerializer(serializers.ModelSerializer):
+    problem = serializers.CharField(source='problem.name', read_only=True)
     class Meta:
         model= TestCase
         fields = ['id', 'input', 'output', 'problem', 'written_by', 'contributed_on', 'is_sample']

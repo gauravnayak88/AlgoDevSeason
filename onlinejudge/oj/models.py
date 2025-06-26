@@ -51,7 +51,7 @@ class TestCase(models.Model):
     is_sample=models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.input} {self.problem.id}"
+        return f"{self.input} for {self.problem.id}"
     
 class Discussion(models.Model):
     title=models.TextField()
