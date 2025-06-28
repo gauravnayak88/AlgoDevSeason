@@ -7,7 +7,7 @@ function Discuss() {
 
 
     useEffect(() => {
-        API.get(`/api/discuss/`)
+        API.get(`/api/discussions/`)
             .then(res => { setDiscussions(res.data) })
             .catch(err => { console.log(err) })
     }, [])

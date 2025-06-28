@@ -1,15 +1,67 @@
+import { useEffect, useState } from "react"
+import API from './api'
+import { Link } from "react-router-dom"
 
 function Explore() {
+    const [topics, setTopics] = useState(null)
+    const [topicWiseProblems, setTopicWiseProblems] = useState([])
+
+
+    useEffect(() => {
+        API.get(`/api/topics/`)
+            .then((res) => {
+                setTopics(res.data)
+            })
+            .catch((err) => { console.log(err) })
+    }, [])
+
+    useEffect(() => {
+        if (topics) {
+            setTopicWiseProblems([]);
+            const fetchAllProblems = async () => {
+                try {
+                    const responses = await Promise.all(
+                        topics.map(topic =>
+                            API.get(`/api/topics/${topic.id}/problems`)
+                                .then(res => ({
+                                    topic,
+                                    problems: res.data
+                                }))
+                        )
+                    );
+                    setTopicWiseProblems(responses);
+                }
+                catch (err) {
+                    console.log(err)
+                }
+            }
+
+            fetchAllProblems()
+        }
+    }, [topics])
+
+    if (!topics) return <p>Loading...</p>
+
     return (
         <div>
-            <h2>Continue previous</h2>
-            <div class="box">Interview strategy</div>
-            <h2>Featured</h2>
-            <div class="box">DSA</div>
-            <h2>Interview</h2>
-            <div class="box">Cheatsheet</div>
-            <h2>Learn</h2>
-            <div class="box">Beginner's guide</div>
+            <ul>
+                {topicWiseProblems.map((item, index) =>
+                    <li key={index}>
+                        <h2>{item.topic.name}</h2>
+                        <ul>
+                            {item.problems.map((p, index) =>
+                                <li key={index}>
+                                    <strong>{p.name}</strong> - ({p.difficulty})
+                                    <Link to={`/problems/${p.id}`}>
+                                        <button>View</button>
+                                    </Link>
+                                </li>
+                            )
+                            }
+                        </ul>
+                    </li>
+                )}
+            </ul>
         </div>
     )
 }

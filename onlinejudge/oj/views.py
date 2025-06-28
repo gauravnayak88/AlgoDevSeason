@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Profile, Problem, ProblemForm, TestCase, TestCaseForm, Solution, Discussion, SolutionForm, RegisterForm
+from .models import Profile, Problem, Topic, ProblemForm, TestCase, TestCaseForm, Solution, Discussion, SolutionForm, RegisterForm
 from django.db.models import Q
 from django.http import HttpResponseForbidden, JsonResponse
 from django.conf import settings
@@ -18,8 +18,8 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticate
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import ProfileSerializer, ProblemSerializer, TestCaseSerializer, SolutionSerializer, DiscussionSerializer, EmailOrUsernameLoginSerializer
-from .permissions import IsStaffUser
+from .serializers import ProfileSerializer, ProblemSerializer, TopicSerializer, TestCaseSerializer, SolutionSerializer, DiscussionSerializer, EmailOrUsernameLoginSerializer
+from .permissions import IsStaffUser, IsOwnerOrReadOnly
 
 # Create your views here.
 
@@ -160,6 +160,58 @@ def run_code(language, code, input_data):
                     stderr=output_file,
                 )
 
+    elif language == 'c':
+        executable_path = codes_dir / unique
+        compile_result = subprocess.run(
+            ["clang", str(code_file_path), "-o", str(executable_path)]
+        )
+        if compile_result.returncode == 0:
+            with open(input_file_path, "r") as input_file:
+                with open(output_file_path, "w") as output_file:
+                    subprocess.run(
+                        [str(executable_path)],
+                        stdin=input_file,
+                        stdout=output_file,
+                        stderr=output_file,
+                    )
+
+    # Write solution as public class Main { public static void main () { ... }}
+    elif language == "java":
+        import re
+
+        # Ensure class name starts with a letter
+        class_name = f"UserMain_{unique.replace('-', '_')}"
+
+        # Replace only the 'public class Main' (or 'class Main') line
+        code_with_class_name = re.sub(
+            r'\b(public\s+)?class\s+Main\b',
+            f'public class {class_name}',
+            code
+        )
+
+        # Write the modified code to file
+        code_file_path = codes_dir / f"{class_name}.java"
+        with open(code_file_path, "w") as code_file:
+            code_file.write(code_with_class_name)
+
+        # Compile Java file to codes_dir
+        compile_result = subprocess.run([
+            "javac",
+            "-d", str(codes_dir),
+            str(code_file_path)
+        ])
+
+        # If compilation succeeded, run the class
+        if compile_result.returncode == 0:
+            with open(input_file_path, "r") as input_file, open(output_file_path, "w") as output_file:
+                subprocess.run(
+                    ["java", "-cp", str(codes_dir), class_name],
+                    stdin=input_file,
+                    stdout=output_file,
+                    stderr=output_file
+                )
+
+
     # Read the output from the output file
     with open(output_file_path, "r") as output_file:
         output_data = output_file.read()
@@ -174,13 +226,23 @@ class TestCaseViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(written_by=self.request.user)
 
+
 class DiscussionViewSet(viewsets.ModelViewSet):
-    queryset = Solution.objects.all()
     serializer_class = DiscussionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    def get_queryset(self):
+        return Discussion.objects.all().order_by('-posted_on')
 
     def perform_create(self, serializer):
         serializer.save(written_by=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save(written_by=self.request.user)
+
+    def perform_destroy(self, instance):
+        if instance.written_by == self.request.user:
+            instance.delete()
 
     
 @api_view(['GET'])
@@ -198,8 +260,15 @@ def problem_list_api(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
+def topicwise_problem_list_api(request, pk):
+    topic = Topic.objects.get(pk=pk)
+    problems = Problem.objects.filter(topic=topic)
+    serializer = ProblemSerializer(problems, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
 def solution_list_api(request, pk):
-    solutions = Solution.objects.filter(problem=pk)
+    solutions = Solution.objects.filter(problem=pk).order_by('-submitted_at')
     serializer = SolutionSerializer(solutions, many=True)
     return Response(serializer.data)
 
@@ -211,8 +280,14 @@ def testcase_list_api(request, pk):
 
 @api_view(['GET'])
 def discussion_list_api(request):
-    discussions = Discussion.objects.all()
+    discussions = Discussion.objects.all().order_by('-posted_on')
     serializer = DiscussionSerializer(discussions, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def topic_list_api(request):
+    topics = Topic.objects.all()
+    serializer = TopicSerializer(topics, many=True)
     return Response(serializer.data)
 
 

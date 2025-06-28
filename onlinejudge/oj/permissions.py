@@ -12,3 +12,10 @@ class IsStaffUser(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         # Used for retrieve/update/delete views
         return request.user == obj.written_by
+    
+
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return True
+        return obj.written_by == request.user

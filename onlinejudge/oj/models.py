@@ -4,7 +4,7 @@ from django import forms
 
 DIFFICULTY=[("hard","Hard"), ("easy","Easy"), ("medium", "Medium")]
 ROLES=[('student', 'Student'),('staff', 'Staff')]
-LANGUAGES=[('cpp', 'C++'), ('java', 'Java'), ('python', 'Python')]
+LANGUAGES=[('cpp', 'C++'), ('java', 'Java'), ('python', 'Python'), ('c', 'C')]
 
 # Create your models here.
 class Profile(models.Model):
@@ -14,6 +14,12 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} {self.role}"
+    
+class Topic(models.Model):
+    name=models.CharField(max_length=20)
+
+    def __str__(self):
+        return f"{self.name}"
 
 class Problem(models.Model):
     written_by = models.ForeignKey(
@@ -25,6 +31,7 @@ class Problem(models.Model):
     name=models.CharField(max_length=50)
     difficulty=models.CharField(choices=DIFFICULTY, max_length=10)
     date_added=models.DateField(auto_now_add=True)
+    topic=models.ManyToManyField(Topic)
 
     def __str__(self):
         return self.name

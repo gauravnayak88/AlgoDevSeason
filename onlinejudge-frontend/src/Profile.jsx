@@ -16,7 +16,7 @@ function Profile() {
     }, [])
 
     useEffect(() => {
-        API.get('api/problems/')
+        API.get('/api/problems/')
             .then(res => setProblems(res.data))
             .catch(err => console.log(err));
     }, [])

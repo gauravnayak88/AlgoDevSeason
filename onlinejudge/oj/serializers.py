@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import AuthenticationFailed
-from .models import Profile, Problem, TestCase, Solution, Discussion
+from .models import Profile, Problem, Topic, TestCase, Solution, Discussion
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.db.models import Q
@@ -71,6 +71,12 @@ class ProblemSerializer(serializers.ModelSerializer):
     def get_written_by(self, obj):
         return obj.written_by.username
     
+
+class TopicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= Topic
+        fields = ['id', 'name']
+
 class TestCaseSerializer(serializers.ModelSerializer):
     problem = serializers.CharField(source='problem.name', read_only=True)
     class Meta:
@@ -99,4 +105,4 @@ class DiscussionSerializer(serializers.ModelSerializer):
 
 
     def get_written_by(self, obj):
-        return obj.written_by.username
+        return obj.written_by.username if obj.written_by else None

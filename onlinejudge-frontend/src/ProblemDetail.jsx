@@ -56,6 +56,7 @@ function ProblemDetail() {
         })
             .then((res) => {
                 setOutput(res.data.output)
+                setMessage("")
                 // setMessage("Code executed successfully!");
             })
             .catch(err => {
@@ -85,7 +86,14 @@ function ProblemDetail() {
         })
         .then(res => {
         setMessage(`Verdict: ${res.data.verdict}`);
-        setOutput(JSON.stringify(res.data.results, null, 2)); // Optional: show detailed feedback
+        setOutput(<ul>
+        {res.data.results.map((r, idx) => (
+            <li key={idx}>
+            <b>Test Case {idx + 1}:</b> {r.verdict}
+            </li>
+        ))}
+        </ul>)
+        // setOutput(JSON.stringify(res.data.results, null, 2)); // Optional: show detailed feedback
         })
         .catch(err => {
             console.error(err);
@@ -139,9 +147,10 @@ function ProblemDetail() {
 
                     <label>Select Language: </label>
                     <select value={language} onChange={e => setLanguage(e.target.value)}>
-                        <option value="python">Python</option>
                         <option value="cpp">C++</option>
+                        <option value="python">Python</option>
                         <option value="java">Java</option>
+                        <option value="c">C</option>
                         {/* Match the keys from your LANGUAGES choices in Django */}
                     </select>
                     <br /><br />

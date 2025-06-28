@@ -77,13 +77,12 @@ MIDDLEWARE = [
 ]
 
 # Following is only for Dev
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False  # safer
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:8000",
+]
 
-# Following is for Production, 
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "https://your-react-site.com",
-# ]
 
 ROOT_URLCONF = 'onlinejudge.urls'
 
