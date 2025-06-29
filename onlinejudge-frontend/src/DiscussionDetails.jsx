@@ -5,7 +5,11 @@ import { useParams, useNavigate, Link } from "react-router-dom"
 function Discuss() {
     const { id } = useParams()
     const [discussion, setDiscussion] = useState(null)
-    const [comments, setComment] = useState(null)
+    const [comments, setComments] = useState(null)
+    const [newComment, setNewComment] = useState("")
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editText, setEditText] = useState("");
+
     const [currentUsername, setCurrentUsername] = useState(null)
     const navigate = useNavigate()
 
@@ -25,9 +29,9 @@ function Discuss() {
 
     useEffect(() => {
         API.get(`/api/discussions/${id}/comments`)
-        .then(res=>{setComment(res.data)})
-        .catch(err=>{console.log(err)})
-    })
+            .then(res => { setComments(res.data) })
+            .catch(err => { console.log(err) })
+    }, [])
 
     const handleDelete = () => {
         const confirm = window.confirm("Are you sure you want to delete this discussion?");
@@ -37,6 +41,48 @@ function Discuss() {
             .then(() => navigate("/discuss"))  // Redirect to list after deletion
             .catch(err => console.log("Delete failed", err))
     }
+
+    const handleAddComment = (e) => {
+        e.preventDefault();
+        if (!newComment.trim()) return;
+
+        API.post('/api/comments/', {
+            discussion: id,
+            content: newComment,
+        })
+            .then(res => {
+                setComments(prev => [res.data, ...prev]);
+                setNewComment("");
+            })
+            .catch(err => console.log(err));
+    }
+
+    const handleUpdateComment = (commentId, updatedText) => {
+        API.patch(`/api/comments/${commentId}/`, {
+            content: updatedText,
+        })
+            .then(res => {
+                setComments(prev => prev.map(c => c.id === commentId ? res.data : c));
+                setEditText("")
+                setEditingCommentId(null)
+            })
+            .catch(err => console.log(err));
+    };
+
+    function handleEditComment(comment) {
+        setEditingCommentId(comment.id);
+        setEditText(comment.content);
+    }
+
+    const handleDeleteComment = (commentId) => {
+        if (!window.confirm("Delete comment?")) return;
+
+        API.delete(`/api/comments/${commentId}/`)
+            .then(() => {
+                setComments(prev => prev.filter(c => c.id !== commentId));
+            })
+            .catch(err => console.log(err));
+    };
 
     const options = {
         year: "numeric",
@@ -68,21 +114,45 @@ function Discuss() {
                     <button onClick={handleDelete}>Delete</button>
                 </div>
             )}
-            <Link><button>Comment</button></Link>
+
+            <h3>Comments</h3>
+            {currentUsername &&
+                <form onSubmit={handleAddComment}>
+                    <textarea
+                        value={newComment}
+                        onChange={e => setNewComment(e.target.value)}
+                        placeholder="Write a comment..."
+                        required
+                    />
+                    <button type="submit">Add Comment</button>
+                </form>
+            }
+
             <ul>
-                {comments?.map((comment)=>
-                    <li>
-                        <p><b>{comment.written_by}</b>-{comment.posted_on}</p>
-                        <p>{comment.content}</p>
-                    </li>    
-                )}
+                {comments?.map((comment) => (
+                    <li key={comment.id}>
+                        <p><strong>{comment.written_by}</strong>: {comment.content}</p>
+                        <p>{new Date(comment.posted_on).toLocaleString("en-IN")}</p>
+                        {editingCommentId === comment.id ? (
+                            <>
+                                <textarea value={editText} onChange={(e) => setEditText(e.target.value)} />
+                                <button onClick={() => handleUpdateComment(comment.id, editText)}>Save</button>
+                                <button onClick={() => setEditingCommentId(null)}>Cancel</button>
+                            </>
+                        ) : (
+                            <p>{comment.content}</p>
+                        )}
+                        {currentUsername === comment.written_by && (
+                            <>
+                                <button onClick={() => handleEditComment(comment)}>Edit</button>
+                                <button onClick={() => handleDeleteComment(comment.id)}>Delete</button>
+                            </>
+                        )}
+                    </li>
+                ))}
             </ul>
-            <ul>
-                <li>
-                    <p><b>Username</b></p>
-                    <p>Comment...</p>
-                </li>
-            </ul>
+
+
         </div>
     )
 }

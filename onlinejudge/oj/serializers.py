@@ -112,8 +112,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = '__all__'
-        read_only_fields = ['written_by', 'discussion']
+        fields = ['id', 'discussion', 'content', 'written_by', 'posted_on']
+        read_only_fields = ['written_by', 'posted_on']
 
     def get_written_by(self, obj):
         return obj.written_by.username if obj.written_by else None

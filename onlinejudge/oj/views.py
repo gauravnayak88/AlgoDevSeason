@@ -74,6 +74,8 @@ class SolutionViewSet(viewsets.ModelViewSet):
             if actual == expected:
                 verdict = "Passed"
                 passed_count += 1
+            elif output == "Time Limit Exceeded":
+                verdict = "Time Limit Exceeded"
             else:
                 verdict = "Failed"
 
@@ -102,7 +104,7 @@ class SolutionViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
 
 
-def run_code(language, code, input_data):
+def run_code(language, code, input_data, time_limit=2, memory_limit=128*1024*1024):
     project_path = Path(settings.BASE_DIR)
     directories = ["codes", "inputs", "outputs"]
 
@@ -135,81 +137,115 @@ def run_code(language, code, input_data):
         # output_file.write("10")
         pass  # This will create an empty file
 
-    if language == "cpp":
-        executable_path = codes_dir / unique
-        compile_result = subprocess.run(
-            ["clang++", str(code_file_path), "-o", str(executable_path)]
-        )
-        if compile_result.returncode == 0:
+    def set_limits():
+        import resource
+        resource.setrlimit(resource.RLIMIT_AS, (memory_limit, resource.RLIM_INFINITY))  # Memory
+        resource.setrlimit(resource.RLIMIT_CPU, (time_limit, time_limit))  # CPU Time
+
+
+    try:
+        if language == "cpp":
+            executable_path = codes_dir / unique
+            compile_result = subprocess.run(
+                ["clang++", str(code_file_path), "-o", str(executable_path)]
+            )
+            if compile_result.returncode == 0:
+                with open(input_file_path, "r") as input_file:
+                    with open(output_file_path, "w") as output_file:
+                        try:
+                            result = subprocess.run(
+                                [str(executable_path)],
+                                stdin=input_file,
+                                stdout=output_file,
+                                stderr=subprocess.PIPE,  # Capture error
+                                timeout=2,               # Example: 2 seconds for TLE
+                            )
+                        except subprocess.TimeoutExpired:
+                            return "Time Limit Exceeded"
+        elif language == "python":
+            # Code for executing Python script
             with open(input_file_path, "r") as input_file:
                 with open(output_file_path, "w") as output_file:
                     subprocess.run(
-                        [str(executable_path)],
+                        ["python3", str(code_file_path)],
                         stdin=input_file,
                         stdout=output_file,
                         stderr=output_file,
                     )
-    elif language == "python":
-        # Code for executing Python script
-        with open(input_file_path, "r") as input_file:
-            with open(output_file_path, "w") as output_file:
-                subprocess.run(
-                    ["python3", str(code_file_path)],
-                    stdin=input_file,
-                    stdout=output_file,
-                    stderr=output_file,
-                )
 
-    elif language == 'c':
-        executable_path = codes_dir / unique
-        compile_result = subprocess.run(
-            ["clang", str(code_file_path), "-o", str(executable_path)]
-        )
-        if compile_result.returncode == 0:
-            with open(input_file_path, "r") as input_file:
-                with open(output_file_path, "w") as output_file:
+        elif language == 'c':
+            executable_path = codes_dir / unique
+            compile_result = subprocess.run(
+                ["clang", str(code_file_path), "-o", str(executable_path)]
+            )
+            if compile_result.returncode == 0:
+                with open(input_file_path, "r") as input_file:
+                    with open(output_file_path, "w") as output_file:
+                        subprocess.run(
+                            [str(executable_path)],
+                            stdin=input_file,
+                            stdout=output_file,
+                            stderr=output_file,
+                        )
+
+        # Write solution as public class Main { public static void main () { ... }}
+        elif language == "java":
+            import re
+
+            # Ensure class name starts with a letter
+            class_name = f"UserMain_{unique.replace('-', '_')}"
+
+            # Replace only the 'public class Main' (or 'class Main') line
+            code_with_class_name = re.sub(
+                r'\b(public\s+)?class\s+Main\b',
+                f'public class {class_name}',
+                code
+            )
+
+            # Write the modified code to file
+            code_file_path = codes_dir / f"{class_name}.java"
+            with open(code_file_path, "w") as code_file:
+                code_file.write(code_with_class_name)
+
+            # Compile Java file to codes_dir
+            compile_result = subprocess.run([
+                "javac",
+                "-d", str(codes_dir),
+                str(code_file_path)
+            ])
+
+            # If compilation succeeded, run the class
+            if compile_result.returncode == 0:
+                with open(input_file_path, "r") as input_file, open(output_file_path, "w") as output_file:
                     subprocess.run(
-                        [str(executable_path)],
+                        ["java", "-cp", str(codes_dir), class_name],
                         stdin=input_file,
                         stdout=output_file,
-                        stderr=output_file,
+                        stderr=output_file
                     )
+                if result.returncode != 0:
+                    verdict = "RE"
+                else:
+                    verdict = "OK"
 
-    # Write solution as public class Main { public static void main () { ... }}
-    elif language == "java":
-        import re
+                return {
+                    "verdict": verdict,
+                    "output": result.stdout.strip(),
+                    "stderr": result.stderr.strip()
+                }
+    except subprocess.TimeoutExpired:
+        return {
+            "verdict": "TLE",
+            "output": "",
+            "stderr": ""
+        }
+    except MemoryError:
+        return {
+            "verdict": "MLE",
+            "output": "",
+            "stderr": ""
+        }
 
-        # Ensure class name starts with a letter
-        class_name = f"UserMain_{unique.replace('-', '_')}"
-
-        # Replace only the 'public class Main' (or 'class Main') line
-        code_with_class_name = re.sub(
-            r'\b(public\s+)?class\s+Main\b',
-            f'public class {class_name}',
-            code
-        )
-
-        # Write the modified code to file
-        code_file_path = codes_dir / f"{class_name}.java"
-        with open(code_file_path, "w") as code_file:
-            code_file.write(code_with_class_name)
-
-        # Compile Java file to codes_dir
-        compile_result = subprocess.run([
-            "javac",
-            "-d", str(codes_dir),
-            str(code_file_path)
-        ])
-
-        # If compilation succeeded, run the class
-        if compile_result.returncode == 0:
-            with open(input_file_path, "r") as input_file, open(output_file_path, "w") as output_file:
-                subprocess.run(
-                    ["java", "-cp", str(codes_dir), class_name],
-                    stdin=input_file,
-                    stdout=output_file,
-                    stderr=output_file
-                )
 
 
     # Read the output from the output file
@@ -256,7 +292,8 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(written_by=self.request.user)
 
     def perform_update(self, serializer):
-        serializer.save(written_by=self.request.user)
+        print("Updating comment:", serializer.validated_data)
+        serializer.save()
 
     def perform_destroy(self, instance):
         if instance.written_by == self.request.user:
