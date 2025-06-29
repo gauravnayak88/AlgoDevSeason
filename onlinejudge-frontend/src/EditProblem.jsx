@@ -39,6 +39,8 @@ function EditProblem() {
         <input id="name" name="name" value={form.name} onChange={handleChange} required /><br/>
         <label htmlFor="statement">Statement: </label><br/>
         <textarea
+          rows={10} 
+          cols={50} 
           id="statement"
           name="statement"
           value={form.statement}

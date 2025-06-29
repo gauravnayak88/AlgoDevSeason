@@ -36,6 +36,8 @@ function EditDiscussion() {
                     required
                 /><br />
                 <textarea
+                    rows={10} 
+                    cols={60}
                     value={content}
                     onChange={e => setContent(e.target.value)}
                     placeholder="Content"

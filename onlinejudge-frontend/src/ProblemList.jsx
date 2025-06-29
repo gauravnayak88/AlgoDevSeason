@@ -39,9 +39,8 @@ function ProblemList() {
             <ul>
                 {problems.map(p => (
                     <li key={p.id}>
-                        <strong>{p.name}</strong> - ({p.difficulty})
                         <Link to={`/problems/${p.id}`}>
-                            <button>View</button>
+                        <strong>{p.name}</strong> - ({p.difficulty})
                         </Link>
                     </li>
                 ))}

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Profile, Problem, Topic, ProblemForm, TestCase, TestCaseForm, Solution, Discussion, SolutionForm, RegisterForm
+from .models import Profile, Problem, Topic, ProblemForm, TestCase, TestCaseForm, Solution, Discussion, Comment, SolutionForm, RegisterForm
 from django.db.models import Q
 from django.http import HttpResponseForbidden, JsonResponse
 from django.conf import settings
@@ -18,7 +18,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticate
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import ProfileSerializer, ProblemSerializer, TopicSerializer, TestCaseSerializer, SolutionSerializer, DiscussionSerializer, EmailOrUsernameLoginSerializer
+from .serializers import ProfileSerializer, ProblemSerializer, TopicSerializer, TestCaseSerializer, SolutionSerializer, DiscussionSerializer, CommentSerializer, EmailOrUsernameLoginSerializer
 from .permissions import IsStaffUser, IsOwnerOrReadOnly
 
 # Create your views here.
@@ -244,6 +244,26 @@ class DiscussionViewSet(viewsets.ModelViewSet):
         if instance.written_by == self.request.user:
             instance.delete()
 
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        return Comment.objects.all().order_by('-posted_on')
+
+    def perform_create(self, serializer):
+        serializer.save(written_by=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save(written_by=self.request.user)
+
+    def perform_destroy(self, instance):
+        if instance.written_by == self.request.user:
+            instance.delete()
+
+
+
     
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -273,6 +293,14 @@ def solution_list_api(request, pk):
     return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def solved_problems_api(request):
+    solutions = Solution.objects.filter(written_by=request.user).select_related('problem')
+    problems = {s.problem for s in solutions}
+    serializer = ProblemSerializer(problems, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
 def testcase_list_api(request, pk):
     testcases = TestCase.objects.filter(problem=pk)
     serializer = TestCaseSerializer(testcases, many=True)
@@ -282,6 +310,13 @@ def testcase_list_api(request, pk):
 def discussion_list_api(request):
     discussions = Discussion.objects.all().order_by('-posted_on')
     serializer = DiscussionSerializer(discussions, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def discussion_comment_list_api(request, pk):
+    discussion = Discussion.objects.get(pk=pk)
+    comments = Comment.objects.filter(discussion=discussion).order_by('-posted_on')
+    serializer = CommentSerializer(comments, many=True)
     return Response(serializer.data)
 
 @api_view(['GET'])

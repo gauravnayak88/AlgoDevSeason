@@ -6,6 +6,14 @@ function Solutions() {
 
     const { id } = useParams()
     const [solutions, setSolution] = useState(null);
+    const [profile, setProfile] = useState(null);
+    const [own, setOwn] = useState(false);
+
+    useEffect(()=>{
+        API.get(`/api/profile/`)
+        .then(res=>{setProfile(res.data)})
+        .catch(err=>{console.log(err)})
+    }, [])
 
     useEffect(()=> {
         API.get(`/api/problems/${id}/solutions`)
@@ -24,14 +32,19 @@ function Solutions() {
         second: "2-digit",
     };
 
+
     return (
     <div>
         <h2>Solutions</h2>
+        <select id="isown" onChange={(e)=>setOwn(e.target.value == "true")}>
+            <option value="false">All</option>
+            <option value="true">Mine</option>
+        </select>
         <ul>
         {
-            solutions.map((sol)=> {
+            solutions.filter(sol => !own || (own && sol.written_by === profile.username )).map((sol)=> {
                 const formattedDate = new Date(sol.submitted_at).toLocaleString("en-IN", options);
-
+                // console.log(own)
                 return (
             <li key={sol.id}>
                 <p>Language: {sol.language}</p>

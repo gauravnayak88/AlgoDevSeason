@@ -3,6 +3,12 @@ import { Link, useParams } from "react-router-dom";
 import axios from 'axios';
 import API from "./api";
 import { useNavigate } from "react-router-dom";
+import ReactMarkdown from 'react-markdown';
+import 'github-markdown-css/github-markdown.css'
+import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+import 'katex/dist/katex.min.css'
 
 function ProblemDetail() {
     const { id } = useParams();
@@ -84,21 +90,21 @@ function ProblemDetail() {
             code: code,
             input_data: input,
         })
-        .then(res => {
-        setMessage(`Verdict: ${res.data.verdict}`);
-        setOutput(<ul>
-        {res.data.results.map((r, idx) => (
-            <li key={idx}>
-            <b>Test Case {idx + 1}:</b> {r.verdict}
-            </li>
-        ))}
-        </ul>)
-        // setOutput(JSON.stringify(res.data.results, null, 2)); // Optional: show detailed feedback
-        })
-        .catch(err => {
-            console.error(err);
-            setMessage("Submission failed.");
-        });
+            .then(res => {
+                setMessage(`Verdict: ${res.data.verdict}`);
+                setOutput(<ul>
+                    {res.data.results.map((r, idx) => (
+                        <li key={idx}>
+                            <b>Test Case {idx + 1}:</b> {r.verdict}
+                        </li>
+                    ))}
+                </ul>)
+                // setOutput(JSON.stringify(res.data.results, null, 2)); // Optional: show detailed feedback
+            })
+            .catch(err => {
+                console.error(err);
+                setMessage("Submission failed.");
+            });
     };
 
     const handleDelete = () => {
@@ -133,7 +139,11 @@ function ProblemDetail() {
                     padding: '1rem',
                     borderRadius: '5px',
                     marginTop: '1rem'
-                }}>{problem.statement}</div>
+                }} className="markdown-body">
+                    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+                        {problem.statement}
+                    </ReactMarkdown>
+                </div>
                 <Link to={`/problems/${problem.id}/solutions`}><button>View Submissions</button></Link>
                 {isAuthenticated && profile?.role === 'staff' &&
                     <Link to={`/problems/${problem.id}/testcases`}><button>View TestCases</button></Link>
@@ -168,7 +178,7 @@ function ProblemDetail() {
                     <textarea onChange={e => setInput(e.target.value)} />
                     {output && (
                         <div style={{
-                             whiteSpace: 'pre-wrap',  // preserve line breaks
+                            whiteSpace: 'pre-wrap',  // preserve line breaks
                             wordWrap: 'break-word',  // break long words
                             overflowWrap: 'break-word', // ensure wrapping even for long strings
                             marginTop: '1rem',

@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django import forms
+import markdown
+from django.utils.safestring import mark_safe
 
 DIFFICULTY=[("hard","Hard"), ("easy","Easy"), ("medium", "Medium")]
 ROLES=[('student', 'Student'),('staff', 'Staff')]
@@ -36,6 +38,9 @@ class Problem(models.Model):
     def __str__(self):
         return self.name
 
+    def formatted_statement(self):
+        return mark_safe(markdown.markdown(self.statement))
+
 class Solution(models.Model):
     problem=models.ForeignKey("Problem", on_delete=models.CASCADE)
     language=models.CharField(choices=LANGUAGES, max_length=20)
@@ -69,6 +74,14 @@ class Discussion(models.Model):
     def __str__(self):
         return f"{self.written_by}-{self.title}"
 
+class Comment(models.Model):
+    discussion=models.ForeignKey(Discussion, on_delete=models.CASCADE)
+    content=models.TextField()
+    written_by=models.ForeignKey(User, on_delete=models.CASCADE)
+    posted_on=models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.written_by}-{self.discussion}"
     
 class RegisterForm(forms.Form):
     username = forms.CharField(max_length=150)

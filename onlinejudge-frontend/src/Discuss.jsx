@@ -35,7 +35,7 @@ function Discuss() {
                             <h3>{disc.title}</h3>
                             <p>{disc.written_by}</p>
                             <p>{formattedDate}</p>
-                            <p>{disc.content}</p>
+                            <p>{disc.content.length > 50 ? disc.content.slice(0, 50) + "..." : disc.content}</p>
                             <Link to={`/discuss/${disc.id}`}><button>View</button></Link>
                         </li>
                     )

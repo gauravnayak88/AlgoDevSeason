@@ -51,9 +51,8 @@ function Explore() {
                         <ul>
                             {item.problems.map((p, index) =>
                                 <li key={index}>
-                                    <strong>{p.name}</strong> - ({p.difficulty})
                                     <Link to={`/problems/${p.id}`}>
-                                        <button>View</button>
+                                        <strong>{p.name}</strong> - ({p.difficulty})
                                     </Link>
                                 </li>
                             )

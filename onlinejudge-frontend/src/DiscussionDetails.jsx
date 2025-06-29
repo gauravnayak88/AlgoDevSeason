@@ -5,6 +5,7 @@ import { useParams, useNavigate, Link } from "react-router-dom"
 function Discuss() {
     const { id } = useParams()
     const [discussion, setDiscussion] = useState(null)
+    const [comments, setComment] = useState(null)
     const [currentUsername, setCurrentUsername] = useState(null)
     const navigate = useNavigate()
 
@@ -21,6 +22,12 @@ function Discuss() {
             .then(res => setCurrentUsername(res.data.username))
             .catch(err => console.log(err))
     }, [id])
+
+    useEffect(() => {
+        API.get(`/api/discussions/${id}/comments`)
+        .then(res=>{setComment(res.data)})
+        .catch(err=>{console.log(err)})
+    })
 
     const handleDelete = () => {
         const confirm = window.confirm("Are you sure you want to delete this discussion?");
@@ -61,6 +68,21 @@ function Discuss() {
                     <button onClick={handleDelete}>Delete</button>
                 </div>
             )}
+            <Link><button>Comment</button></Link>
+            <ul>
+                {comments?.map((comment)=>
+                    <li>
+                        <p><b>{comment.written_by}</b>-{comment.posted_on}</p>
+                        <p>{comment.content}</p>
+                    </li>    
+                )}
+            </ul>
+            <ul>
+                <li>
+                    <p><b>Username</b></p>
+                    <p>Comment...</p>
+                </li>
+            </ul>
         </div>
     )
 }

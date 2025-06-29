@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import AuthenticationFailed
-from .models import Profile, Problem, Topic, TestCase, Solution, Discussion
+from .models import Profile, Problem, Topic, TestCase, Solution, Discussion, Comment
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.db.models import Q
@@ -103,6 +103,17 @@ class DiscussionSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'content', 'posted_on', 'written_by']
         read_only_fields = ['written_by']
 
+
+    def get_written_by(self, obj):
+        return obj.written_by.username if obj.written_by else None
+    
+class CommentSerializer(serializers.ModelSerializer):
+    written_by = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = '__all__'
+        read_only_fields = ['written_by', 'discussion']
 
     def get_written_by(self, obj):
         return obj.written_by.username if obj.written_by else None

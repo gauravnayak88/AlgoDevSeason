@@ -28,7 +28,7 @@ function PostDiscussion () {
                 <input type="text" id="title" name="title" onChange={(e)=>{setTitle(e.target.value)}}/>
                 <br/>
                 <label htmlFor="title">Content: </label><br/>
-                <textarea type="text" id="title" name="title" onChange={(e)=>{setContent(e.target.value)}}/>
+                <textarea rows={10} cols={60} type="text" id="title" name="title" onChange={(e)=>{setContent(e.target.value)}}/>
                 <br/>
                 <button>Post</button>
             </form>

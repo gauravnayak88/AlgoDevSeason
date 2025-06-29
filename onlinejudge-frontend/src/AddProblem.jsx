@@ -35,7 +35,7 @@ function AddProblem() {
       <h2>Add Problem</h2>
       <form onSubmit={handleSubmit}>
         <input name="name" placeholder="Problem Name" onChange={handleChange} required />
-        <textarea name="statement" placeholder="Problem Statement" onChange={handleChange} required />
+        <textarea rows={10} cols={50} name="statement" placeholder="Problem Statement" onChange={handleChange} required />
         <select name="difficulty" onChange={handleChange}>
           <option value="easy">Easy</option>
           <option value="medium">Medium</option>
