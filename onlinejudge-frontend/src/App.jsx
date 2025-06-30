@@ -20,6 +20,7 @@ import DiscussionDetails from './DiscussionDetails';
 import Explore from './Explore';
 import PostDiscussion from './PostDiscussion';
 import EditDiscussion from './EditDiscussion';
+import Leaderboard from './Leaderboard';
 
 
 import './App.css'
@@ -72,6 +73,7 @@ function App() {
         <Route path='/problems/:id/testcases' element={<TestCases />} />
         <Route path='/solutions/:id' element={<SolutionDetail />} />
         <Route path='/addproblem' element={<AddProblem />} />
+        <Route path='/leaderboard' element={<Leaderboard />} />
         <Route path='/contests' element={<Contests />} />
         <Route path='/discuss' element={<Discuss />} />
         <Route path='/discuss/post' element={<PostDiscussion />} />

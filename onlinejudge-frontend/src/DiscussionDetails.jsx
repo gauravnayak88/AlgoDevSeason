@@ -100,59 +100,111 @@ function Discuss() {
     const isOwner = discussion.written_by === currentUsername
 
     return (
-        <div>
-            <h2>Discussion</h2>
-            <h3>{discussion.title}</h3>
-            <p><strong>By:</strong> {discussion.written_by}</p>
-            <p><strong>Posted on:</strong> {formattedDate}</p>
-            <p>{discussion.content}</p>
-            {/* <p>Current user: {currentUsername}</p> */}
-            {/* <p>Written by: {discussion.written_by}</p> */}
-            {isOwner && (
-                <div>
-                    <Link to={`/discuss/${id}/edit`}><button>Edit</button></Link>
-                    <button onClick={handleDelete}>Delete</button>
-                </div>
-            )}
+        <div className="p-6 max-w-4xl mx-auto">
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Discussion</h2>
+            <div className="bg-white shadow rounded-lg p-4 border mb-6">
+                <h3 className="text-2xl font-semibold text-gray-800">{discussion.title}</h3>
+                <p className="text-sm text-gray-600 mb-2">
+                    <strong>By:</strong> {discussion.written_by} •{" "}
+                    <strong>Posted on:</strong> {formattedDate}
+                </p>
+                <p className="text-gray-700 whitespace-pre-line">{discussion.content}</p>
 
-            <h3>Comments</h3>
-            {currentUsername &&
-                <form onSubmit={handleAddComment}>
-                    <textarea
-                        value={newComment}
-                        onChange={e => setNewComment(e.target.value)}
-                        placeholder="Write a comment..."
-                        required
-                    />
-                    <button type="submit">Add Comment</button>
-                </form>
-            }
+                {isOwner && (
+                    <div className="flex gap-3 mt-4">
+                        <Link to={`/discuss/${id}/edit`}>
+                            <button className="px-4 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+                                Edit
+                            </button>
+                        </Link>
+                        <button
+                            onClick={handleDelete}
+                            className="px-4 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                )}
+            </div>
 
-            <ul>
-                {comments?.map((comment) => (
-                    <li key={comment.id}>
-                        <p><strong>{comment.written_by}</strong>: {comment.content}</p>
-                        <p>{new Date(comment.posted_on).toLocaleString("en-IN")}</p>
-                        {editingCommentId === comment.id ? (
-                            <>
-                                <textarea value={editText} onChange={(e) => setEditText(e.target.value)} />
-                                <button onClick={() => handleUpdateComment(comment.id, editText)}>Save</button>
-                                <button onClick={() => setEditingCommentId(null)}>Cancel</button>
-                            </>
-                        ) : (
-                            <p>{comment.content}</p>
-                        )}
-                        {currentUsername === comment.written_by && (
-                            <>
-                                <button onClick={() => handleEditComment(comment)}>Edit</button>
-                                <button onClick={() => handleDeleteComment(comment.id)}>Delete</button>
-                            </>
-                        )}
-                    </li>
-                ))}
-            </ul>
+            <div className="mb-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Comments</h3>
 
+                {currentUsername && (
+                    <form onSubmit={handleAddComment} className="space-y-2 mb-6">
+                        <textarea
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            placeholder="Write a comment..."
+                            className="w-full border rounded px-3 py-2 focus:ring focus:ring-blue-200"
+                            required
+                        />
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                            Add Comment
+                        </button>
+                    </form>
+                )}
 
+                <ul className="space-y-4">
+                    {comments?.map((comment) => (
+                        <li
+                            key={comment.id}
+                            className="bg-gray-50 border rounded p-3 shadow-sm"
+                        >
+                            <div className="text-sm text-gray-600 mb-1">
+                                <strong>{comment.written_by}</strong> •{" "}
+                                {new Date(comment.posted_on).toLocaleString("en-IN")}
+                            </div>
+
+                            {editingCommentId === comment.id ? (
+                                <>
+                                    <textarea
+                                        value={editText}
+                                        onChange={(e) => setEditText(e.target.value)}
+                                        className="w-full border rounded px-2 py-1 mb-2"
+                                    />
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleUpdateComment(comment.id, editText)}
+                                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                                        >
+                                            Save
+                                        </button>
+                                        <button
+                                            onClick={() => setEditingCommentId(null)}
+                                            className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 text-sm"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="text-gray-800 mb-2">{comment.content}</p>
+                            )}
+
+                            {currentUsername === comment.written_by && editingCommentId !== comment.id && (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleEditComment(comment)}
+                                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteComment(comment.id)}
+                                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            </div>
         </div>
     )
 }

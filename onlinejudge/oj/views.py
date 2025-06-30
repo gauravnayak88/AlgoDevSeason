@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Profile, Problem, Topic, ProblemForm, TestCase, TestCaseForm, Solution, Discussion, Comment, SolutionForm, RegisterForm
-from django.db.models import Q
+from django.db.models import Q, F, Count
 from django.http import HttpResponseForbidden, JsonResponse
 from django.conf import settings
 import os
@@ -65,6 +65,9 @@ class SolutionViewSet(viewsets.ModelViewSet):
         testcases = TestCase.objects.filter(problem=problem)
         results = []
         passed_count = 0
+        tle_count = 0
+        compilation_error_count = 0
+        runtime_error_count = 0
 
         for tc in testcases:
             output = run_code(language, code, tc.input)
@@ -74,8 +77,16 @@ class SolutionViewSet(viewsets.ModelViewSet):
             if actual == expected:
                 verdict = "Passed"
                 passed_count += 1
+            elif "Compilation Error" in output:
+                verdict = "Compilation Error"
+                compilation_error_count += 1
+                break
+            elif "Runtime Error" in output:
+                verdict = "Runtime Error"
+                runtime_error_count += 1
             elif output == "Time Limit Exceeded":
                 verdict = "Time Limit Exceeded"
+                tle_count += 1
             else:
                 verdict = "Failed"
 
@@ -86,7 +97,16 @@ class SolutionViewSet(viewsets.ModelViewSet):
                 "verdict": verdict
             })
 
-        final_verdict = "Accepted" if passed_count == len(testcases) else "Wrong Answer"
+        if passed_count == len(testcases):
+            final_verdict = "Accepted"
+        elif compilation_error_count>0:
+            final_verdict = "Compilation Error"
+        elif runtime_error_count>0:
+            final_verdict = "Runtime Error"
+        elif tle_count>0:
+            final_verdict = "Time Limit Exceeded"
+        else:
+            final_verdict = "Wrong Answer"
 
         solution = Solution.objects.create(
             written_by=request.user,
@@ -143,109 +163,93 @@ def run_code(language, code, input_data, time_limit=2, memory_limit=128*1024*102
         resource.setrlimit(resource.RLIMIT_CPU, (time_limit, time_limit))  # CPU Time
 
 
-    try:
-        if language == "cpp":
-            executable_path = codes_dir / unique
-            compile_result = subprocess.run(
-                ["clang++", str(code_file_path), "-o", str(executable_path)]
-            )
-            if compile_result.returncode == 0:
-                with open(input_file_path, "r") as input_file:
-                    with open(output_file_path, "w") as output_file:
-                        try:
-                            result = subprocess.run(
-                                [str(executable_path)],
-                                stdin=input_file,
-                                stdout=output_file,
-                                stderr=subprocess.PIPE,  # Capture error
-                                timeout=2,               # Example: 2 seconds for TLE
-                            )
-                        except subprocess.TimeoutExpired:
-                            return "Time Limit Exceeded"
-        elif language == "python":
-            # Code for executing Python script
+    if language == "cpp":
+        executable_path = codes_dir / unique
+        compile_result = subprocess.run(
+            ["clang++", str(code_file_path), "-o", str(executable_path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        if compile_result.returncode == 0:
+            with open(input_file_path, "r") as input_file:
+                with open(output_file_path, "w") as output_file:
+                    try:
+                        result = subprocess.run(
+                            [str(executable_path)],
+                            stdin=input_file,
+                            stdout=output_file,
+                            stderr=subprocess.PIPE,
+                            text=True,               # Capture error
+                            timeout=2,               # Example: 2 seconds for TLE
+                        )
+                        if result.returncode != 0:
+                            return "Runtime Error!!!\n" + result.stderr.strip()
+                    except subprocess.TimeoutExpired:
+                        return "Time Limit Exceeded"
+        else:
+            return "Compilation Error!!!\n" + compile_result.stderr.strip()
+    elif language == "python":
+        # Code for executing Python script
+        with open(input_file_path, "r") as input_file:
+            with open(output_file_path, "w") as output_file:
+                subprocess.run(
+                    ["python3", str(code_file_path)],
+                    stdin=input_file,
+                    stdout=output_file,
+                    stderr=output_file,
+                )
+
+    elif language == 'c':
+        executable_path = codes_dir / unique
+        compile_result = subprocess.run(
+            ["clang", str(code_file_path), "-o", str(executable_path)]
+        )
+        if compile_result.returncode == 0:
             with open(input_file_path, "r") as input_file:
                 with open(output_file_path, "w") as output_file:
                     subprocess.run(
-                        ["python3", str(code_file_path)],
+                        [str(executable_path)],
                         stdin=input_file,
                         stdout=output_file,
                         stderr=output_file,
                     )
 
-        elif language == 'c':
-            executable_path = codes_dir / unique
-            compile_result = subprocess.run(
-                ["clang", str(code_file_path), "-o", str(executable_path)]
-            )
-            if compile_result.returncode == 0:
-                with open(input_file_path, "r") as input_file:
-                    with open(output_file_path, "w") as output_file:
-                        subprocess.run(
-                            [str(executable_path)],
-                            stdin=input_file,
-                            stdout=output_file,
-                            stderr=output_file,
-                        )
+    # Write solution as public class Main { public static void main () { ... }}
+    elif language == "java":
+        import re
 
-        # Write solution as public class Main { public static void main () { ... }}
-        elif language == "java":
-            import re
+        # Ensure class name starts with a letter
+        class_name = f"UserMain_{unique.replace('-', '_')}"
 
-            # Ensure class name starts with a letter
-            class_name = f"UserMain_{unique.replace('-', '_')}"
+        # Replace only the 'public class Main' (or 'class Main') line
+        code_with_class_name = re.sub(
+            r'\b(public\s+)?class\s+Main\b',
+            f'public class {class_name}',
+            code
+        )
 
-            # Replace only the 'public class Main' (or 'class Main') line
-            code_with_class_name = re.sub(
-                r'\b(public\s+)?class\s+Main\b',
-                f'public class {class_name}',
-                code
-            )
+        # Write the modified code to file
+        code_file_path = codes_dir / f"{class_name}.java"
+        with open(code_file_path, "w") as code_file:
+            code_file.write(code_with_class_name)
 
-            # Write the modified code to file
-            code_file_path = codes_dir / f"{class_name}.java"
-            with open(code_file_path, "w") as code_file:
-                code_file.write(code_with_class_name)
+        # Compile Java file to codes_dir
+        compile_result = subprocess.run([
+            "javac",
+            "-d", str(codes_dir),
+            str(code_file_path)
+        ])
 
-            # Compile Java file to codes_dir
-            compile_result = subprocess.run([
-                "javac",
-                "-d", str(codes_dir),
-                str(code_file_path)
-            ])
-
-            # If compilation succeeded, run the class
-            if compile_result.returncode == 0:
-                with open(input_file_path, "r") as input_file, open(output_file_path, "w") as output_file:
-                    subprocess.run(
-                        ["java", "-cp", str(codes_dir), class_name],
-                        stdin=input_file,
-                        stdout=output_file,
-                        stderr=output_file
-                    )
-                if result.returncode != 0:
-                    verdict = "RE"
-                else:
-                    verdict = "OK"
-
-                return {
-                    "verdict": verdict,
-                    "output": result.stdout.strip(),
-                    "stderr": result.stderr.strip()
-                }
-    except subprocess.TimeoutExpired:
-        return {
-            "verdict": "TLE",
-            "output": "",
-            "stderr": ""
-        }
-    except MemoryError:
-        return {
-            "verdict": "MLE",
-            "output": "",
-            "stderr": ""
-        }
-
+        # If compilation succeeded, run the class
+        if compile_result.returncode == 0:
+            with open(input_file_path, "r") as input_file, open(output_file_path, "w") as output_file:
+                subprocess.run(
+                    ["java", "-cp", str(codes_dir), class_name],
+                    stdin=input_file,
+                    stdout=output_file,
+                    stderr=output_file
+                )
 
 
     # Read the output from the output file
@@ -361,6 +365,18 @@ def topic_list_api(request):
     topics = Topic.objects.all()
     serializer = TopicSerializer(topics, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+def leaderboard(request):
+    data = (
+    Solution.objects
+    .filter(verdict="Accepted")
+    .values(username=F("written_by__username"))  # alias it to `username`
+    .annotate(solved_count=Count("problem", distinct=True))
+    .order_by("-solved_count")
+    )
+    return Response(data)
 
 
 @api_view(['POST'])

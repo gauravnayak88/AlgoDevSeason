@@ -52,7 +52,7 @@ class Solution(models.Model):
     submitted_at=models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.id} {self.submitted_at}"
+        return f"{self.problem}-{self.verdict}-{self.written_by}-{self.submitted_at}"
 
 class TestCase(models.Model):
     input=models.TextField()

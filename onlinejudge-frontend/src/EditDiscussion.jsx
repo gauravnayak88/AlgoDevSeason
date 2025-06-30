@@ -25,25 +25,40 @@ function EditDiscussion() {
     }
 
     return (
-        <div>
-            <h2>Edit Discussion</h2>
-            <form onSubmit={handleSubmit}>
-                <input
-                    type="text"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    placeholder="Title"
-                    required
-                /><br />
-                <textarea
-                    rows={10} 
-                    cols={60}
-                    value={content}
-                    onChange={e => setContent(e.target.value)}
-                    placeholder="Content"
-                    required
-                ></textarea><br />
-                <button type="submit">Save</button>
+        <div className="max-w-2xl mx-auto p-6 mt-8 bg-white rounded-lg shadow-md">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Edit Discussion</h2>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        placeholder="Title"
+                        required
+                        className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+
+                <div>
+                    <textarea
+                        rows={10}
+                        value={content}
+                        onChange={e => setContent(e.target.value)}
+                        placeholder="Content"
+                        required
+                        className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    ></textarea>
+                </div>
+
+                <div className="flex justify-end">
+                    <button
+                        type="submit"
+                        className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition"
+                    >
+                        Save
+                    </button>
+                </div>
             </form>
         </div>
     )
