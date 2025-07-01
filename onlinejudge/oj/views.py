@@ -7,12 +7,15 @@ from .models import Profile, Problem, Topic, ProblemForm, TestCase, TestCaseForm
 from django.db.models import Q, F, Count
 from django.http import HttpResponseForbidden, JsonResponse
 from django.conf import settings
-import os
 import uuid
 import subprocess
 from pathlib import Path
-from openai import OpenAI
+import os
+from dotenv import load_dotenv
 import httpx
+
+load_dotenv()  # Load variables from .env file
+api_key = os.environ.get("API_KEY")
 
 #DRF
 from rest_framework import viewsets, permissions, status
@@ -23,7 +26,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import ProfileSerializer, ProblemSerializer, TopicSerializer, TestCaseSerializer, SolutionSerializer, DiscussionSerializer, CommentSerializer, EmailOrUsernameLoginSerializer
 from .permissions import IsStaffUser, IsOwnerOrReadOnly
 
-MY_KEY = "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"
 
 # Create your views here.
 
@@ -53,7 +55,7 @@ def get_ai_feedback(code, language):
 
     try:
         headers = {
-            "Authorization": f"Bearer {MY_KEY}",
+            "Authorization": f"Bearer {api_key}",
         }
 
         response = httpx.post(
