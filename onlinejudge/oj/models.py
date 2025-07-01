@@ -49,6 +49,7 @@ class Solution(models.Model):
     output_data=models.TextField(blank=True, default='')
     written_by=models.ForeignKey(User, on_delete=models.CASCADE)
     verdict=models.CharField(max_length=20)
+    ai_feedback = models.TextField(blank=True, null=True)
     submitted_at=models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

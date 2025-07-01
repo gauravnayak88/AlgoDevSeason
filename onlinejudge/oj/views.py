@@ -11,6 +11,8 @@ import os
 import uuid
 import subprocess
 from pathlib import Path
+from openai import OpenAI
+import httpx
 
 #DRF
 from rest_framework import viewsets, permissions, status
@@ -20,6 +22,8 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import ProfileSerializer, ProblemSerializer, TopicSerializer, TestCaseSerializer, SolutionSerializer, DiscussionSerializer, CommentSerializer, EmailOrUsernameLoginSerializer
 from .permissions import IsStaffUser, IsOwnerOrReadOnly
+
+MY_KEY = "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"
 
 # Create your views here.
 
@@ -43,6 +47,29 @@ class ProblemViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(written_by=self.request.user)
+
+def get_ai_feedback(code, language):
+    prompt = f"Review this {language} code:\n\n{code}\n\nBriefly comment on its quality, improvements, and logic."
+
+    try:
+        headers = {
+            "Authorization": f"Bearer {MY_KEY}",
+        }
+
+        response = httpx.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json={
+                "model": "mistralai/mistral-7b-instruct",  # or any other free model
+                "messages": [
+                    {"role": "system", "content": "You are a helpful code reviewer."},
+                    {"role": "user", "content": prompt}
+                ]
+            }
+        )
+        return response.json()["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f"AI feedback unavailable. Error: {str(e)}"
 
 class SolutionViewSet(viewsets.ModelViewSet):
     queryset = Solution.objects.all()
@@ -108,19 +135,23 @@ class SolutionViewSet(viewsets.ModelViewSet):
         else:
             final_verdict = "Wrong Answer"
 
+        ai_feedback = get_ai_feedback(request.data["code"], request.data["language"])
+
         solution = Solution.objects.create(
             written_by=request.user,
             problem=problem,
             code=code,
             language=language,
             verdict=final_verdict,
+            ai_feedback=ai_feedback,
         )
 
         serializer = self.get_serializer(solution)
         return Response({
             "solution": serializer.data,
             "verdict": final_verdict,
-            "results": results
+            "results": results,
+            "ai_feedback": ai_feedback,
         }, status=status.HTTP_201_CREATED)
 
 

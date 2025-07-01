@@ -24,9 +24,9 @@ function Leaderboard() {
                     </thead>
                     <tbody className="text-gray-700">
                         {leaderboard.map((user, index) => (
-                            <tr key={user.written_by} className="border-t">
+                            <tr key={user.written_by || user.username} className="border-t">
                                 <td className="py-3 px-4">{index + 1}</td>
-                                <td className="py-3 px-4 font-medium">{user.username}</td>
+                                <td className="py-3 px-4 font-medium">{user.written_by || user.username}</td>
                                 <td className="py-3 px-4">{user.solved_count}</td>
                             </tr>
                         ))}

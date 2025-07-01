@@ -22,6 +22,7 @@ function ProblemDetail() {
     const [language, setLanguage] = useState("python");
     const [input, setInput] = useState("");
     const [output, setOutput] = useState("");
+    const [aiReview, setAiReview] = useState("");
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -72,7 +73,7 @@ function ProblemDetail() {
                 setOutput("Error executing code.");
                 setMessage("Execution failed.");
             })
-            .finally(()=>{setIsProcessing(false)});
+            .finally(() => { setIsProcessing(false) });
 
     }
 
@@ -103,14 +104,19 @@ function ProblemDetail() {
                             <b>Test Case {idx + 1}:</b> {r.verdict}
                         </li>
                     ))}
-                </ul>)
+                </ul>
+                )
+                setAiReview(<div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4">
+                    <h4 className="font-bold mb-2">AI Review:</h4>
+                    <p>{res.data.ai_feedback}</p>
+                </div>)
                 // setOutput(JSON.stringify(res.data.results, null, 2)); // Optional: show detailed feedback
             })
             .catch(err => {
                 console.error(err);
                 setMessage("Submission failed.");
             })
-            .finally(()=>{setIsProcessing(false)});
+            .finally(() => { setIsProcessing(false) });
     };
 
     const handleDelete = () => {
@@ -259,15 +265,17 @@ function ProblemDetail() {
                     )}
 
                     {/* {message && <p className="text-red-600">{message}</p>} */}
-                    { message && <span className={`font-semibold px-2 py-0.5 rounded ${message === "Accepted"
+                    {message && <span className={`font-semibold px-2 py-0.5 rounded ${message === "Accepted"
                         ? "bg-green-100 text-green-700"
                         : message === "Wrong Answer"
                             ? "bg-red-100 text-red-700"
                             : "bg-yellow-100 text-yellow-700"
-                    }`}>
-                    {message}
+                        }`}>
+                        {message}
                     </span>
                     }
+
+                    {aiReview}
 
                     <div className="flex gap-3">
                         <button
