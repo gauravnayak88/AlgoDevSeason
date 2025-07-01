@@ -426,6 +426,15 @@ def run_code_api(request):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['POST'])
+def ai_review_api(request):
+    code = request.data.get("code")
+    language = request.data.get("language")
+
+    review = get_ai_feedback(code, language)
+
+    return Response({"review": review})
+
 
 
 #Another DRF-React view

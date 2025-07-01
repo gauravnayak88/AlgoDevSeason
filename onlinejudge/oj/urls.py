@@ -12,6 +12,7 @@ urlpatterns = [
     path('api/topics/', views.topic_list_api, name='topic-list-api'),
     path('api/topics/<int:pk>/problems', views.topicwise_problem_list_api, name='topicwise-problem-list-api'),
     path('api/solutions/<int:pk>', views.solution_detail_api, name='api-solution-detail'),
+    path('api/aireview/', views.ai_review_api, name='api-ai-review'),
     path('api/leaderboard/', views.leaderboard, name='api-leaderboard'),
     # path('api/discuss/', views.discussion_list_api, name='discussion-list-api'),
     path('api/discuss/<int:pk>', views.discussion_detail_api, name='api-discussion-detail'),
