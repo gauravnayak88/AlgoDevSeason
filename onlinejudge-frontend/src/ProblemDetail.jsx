@@ -187,11 +187,13 @@ function ProblemDetail() {
                 </div>
 
                 <div className="flex gap-3 flex-wrap">
+                    {isAuthenticated && 
                     <Link to={`/problems/${problem.id}/solutions`}>
                         <button className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
                             View Submissions
                         </button>
                     </Link>
+                    }
                     {isAuthenticated && profile?.role === "staff" && (
                         <Link to={`/problems/${problem.id}/testcases`}>
                             <button className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">

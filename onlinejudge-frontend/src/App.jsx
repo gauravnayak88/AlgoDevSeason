@@ -14,7 +14,7 @@ import Profile from './Profile';
 import Solutions from './Solutions';
 import SolutionDetail from './SolutionDetail';
 import TestCases from './TestCases';
-import Contests from './Contests';
+import Challenges from './Challenges';
 import Discuss from './Discuss';
 import DiscussionDetails from './DiscussionDetails';
 import Explore from './Explore';
@@ -74,7 +74,7 @@ function App() {
         <Route path='/solutions/:id' element={<SolutionDetail />} />
         <Route path='/addproblem' element={<AddProblem />} />
         <Route path='/leaderboard' element={<Leaderboard />} />
-        <Route path='/contests' element={<Contests />} />
+        <Route path='/challenges' element={<Challenges />} />
         <Route path='/discuss' element={<Discuss />} />
         <Route path='/discuss/post' element={<PostDiscussion />} />
         <Route path='/discuss/:id' element={<DiscussionDetails />} />

@@ -3,7 +3,7 @@ import { CalendarDays, Flame } from "lucide-react"; // optional icons
 import { useEffect, useState } from "react";
  
 
-export default function ContestsPage() {
+export default function Challenges() {
     const [daily, setDaily] = useState(null)
     const [weekly, setWeekly] = useState(null)
 
@@ -17,7 +17,7 @@ export default function ContestsPage() {
 
     return (
         <div className="p-6 bg-gray-100 min-h-screen">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">🔥 Coding Contests</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">🔥 Coding Challenges</h1>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Daily Challenge */}
                 <li className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition duration-300">

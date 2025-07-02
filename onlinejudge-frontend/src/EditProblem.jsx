@@ -9,7 +9,9 @@ function EditProblem() {
   const [form, setForm] = useState({
     name: "",
     statement: "",
-    difficulty: "Easy",
+    difficulty: "easy",
+    time_limit: "",
+    memory_limit: "",
   });
 
   useEffect(() => {
@@ -51,9 +53,9 @@ function EditProblem() {
         <div>
           <label htmlFor="statement" className="block text-sm font-medium text-gray-700">Statement</label>
           <textarea
-            rows={10}
             id="statement"
             name="statement"
+            rows={10}
             value={form.statement}
             onChange={handleChange}
             required
@@ -74,6 +76,36 @@ function EditProblem() {
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
           </select>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="time_limit" className="block text-sm font-medium text-gray-700">Time Limit (in seconds)</label>
+            <input
+              type="number"
+              id="time_limit"
+              name="time_limit"
+              value={form.time_limit}
+              onChange={handleChange}
+              required
+              min={1}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="memory_limit" className="block text-sm font-medium text-gray-700">Memory Limit (in MB)</label>
+            <input
+              type="number"
+              id="memory_limit"
+              name="memory_limit"
+              value={form.memory_limit}
+              onChange={handleChange}
+              required
+              min={1}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2"
+            />
+          </div>
         </div>
 
         <div className="flex justify-end">
