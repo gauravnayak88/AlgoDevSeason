@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/gauravnayak/Desktop/AlgouniversityDevSeason/Project/AlgoDevSeason/onlinejudge/codes/9c026081-11da-47f7-a485-d766410c6cfb.python", line 4, in <module>
+    while(true):
+NameError: name 'true' is not defined. Did you mean: 'True'?

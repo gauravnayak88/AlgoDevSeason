@@ -1,6 +1,13 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import API from "./api";
+import ReactMarkdown from 'react-markdown';
+import 'github-markdown-css/github-markdown.css'
+import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+import 'katex/dist/katex.min.css'
+
 
 function SolutionDetail() {
     const { id } = useParams();
@@ -23,7 +30,7 @@ function SolutionDetail() {
                 setAiReview(res.data.review)
             })
             .catch(err => { console.log(err) })
-            .finally(()=> {setIsProcessing(false)})
+            .finally(() => { setIsProcessing(false) })
     }
 
     if (!solution) return <p>Loading...</p>
@@ -65,11 +72,23 @@ function SolutionDetail() {
             </div>
 
             {aiReview &&
-                <div>
-                    <div className="whitespace-pre-wrap break-words bg-gray-100 p-4 rounded-md shadow-inner font-mono text-sm">
+                <div className="prose max-w-none bg-gray-50 p-4 rounded-md shadow-inner mb-4 overflow-auto">
+                    <ReactMarkdown
+                        remarkPlugins={[remarkGfm, remarkMath]}
+                        rehypePlugins={[rehypeKatex]}
+                        components={{
+                            p: ({ children }) => <p className="mb-4">{children}</p>,
+                            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
+                            h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
+                            li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
+                            pre: ({ children }) => <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">{children}</pre>,
+                            code: ({ children }) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">{children}</code>,
+                        }}
+                    >
                         {aiReview}
-                    </div>
-                </div>}
+                    </ReactMarkdown>
+                </div>
+            }
 
             {isProcessing && (
                 <div className="flex items-center space-x-2 text-blue-600">

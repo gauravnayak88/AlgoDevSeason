@@ -39,6 +39,15 @@ function Profile() {
         }
     }, [profile]);
 
+    const options = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+    };
+
     if (!profile || loading) return <p>Loading... </p>
     if (profile?.role === 'staff' && !problems) return <p>Loading... </p>
 
@@ -119,6 +128,7 @@ function Profile() {
                             <p className="text-gray-700">
                                 Verdict: <span className={`${sub.verdict === "Accepted" ? "text-green-600" : "text-red-600"}`}>{sub.verdict}</span>
                             </p>
+                                Submitted At: {new Date(sub.submitted_at).toLocaleString("en-IN", options)}
                         </li>
                     ))}
                 </ul>

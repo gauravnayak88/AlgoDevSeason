@@ -29,11 +29,13 @@ class Problem(models.Model):
         on_delete=models.CASCADE,
         related_name="problems",
     )
-    statement=models.TextField(blank=True)
-    name=models.CharField(max_length=50)
-    difficulty=models.CharField(choices=DIFFICULTY, max_length=10)
-    date_added=models.DateField(auto_now_add=True)
-    topic=models.ManyToManyField(Topic)
+    statement = models.TextField(blank=True)
+    name = models.CharField(max_length=50)
+    difficulty = models.CharField(choices=DIFFICULTY, max_length=10)
+    time_limit = models.DecimalField(max_digits=6, decimal_places=2)
+    memory_limit = models.DecimalField(max_digits=6, decimal_places=2)
+    date_added = models.DateField(auto_now_add=True)
+    topic = models.ManyToManyField(Topic)
 
     def __str__(self):
         return self.name

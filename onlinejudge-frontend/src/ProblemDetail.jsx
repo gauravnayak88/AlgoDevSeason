@@ -59,6 +59,7 @@ function ProblemDetail() {
         // }
 
         API.post("/api/run", {
+            problem: problem,
             code: code,
             language: language,
             input_data: input
@@ -228,6 +229,11 @@ function ProblemDetail() {
                         className="w-full border rounded px-3 py-2 font-mono text-sm focus:ring focus:ring-blue-200"
                     />
 
+                    <div className="text-sm text-gray-600 mt-1">
+                        ⏱ Time Limit: <span className="font-medium">{problem.time_limit} sec</span> &nbsp;|&nbsp;
+                        🧠 Memory Limit: <span className="font-medium">{problem.memory_limit} MB</span>
+                    </div>
+
                     <label className="block text-sm font-medium text-gray-600">Input</label>
                     <textarea
                         rows={4}
@@ -275,8 +281,6 @@ function ProblemDetail() {
                     </span>
                     }
 
-                    {aiReview}
-
                     <div className="flex gap-3">
                         <button
                             type="button"
@@ -292,6 +296,15 @@ function ProblemDetail() {
                             Submit
                         </button>
                     </div>
+
+                    {aiReview &&
+                    <div>
+                        <div className="whitespace-pre-wrap break-words bg-gray-100 p-4 rounded-md shadow-inner font-mono text-sm">
+                            {aiReview}
+                        </div>
+                    </div>
+                    }
+
                 </form>
             </div>
         </div>

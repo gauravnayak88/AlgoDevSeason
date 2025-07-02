@@ -65,7 +65,7 @@ class ProblemSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Problem
-        fields = ['id', 'name', 'statement', 'difficulty', 'written_by']
+        fields = '__all__'
         read_only_fields = ['written_by']
 
     def get_written_by(self, obj):

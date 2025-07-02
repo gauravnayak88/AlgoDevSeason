@@ -11,6 +11,7 @@ import uuid
 import subprocess
 from pathlib import Path
 import os
+import signal
 from dotenv import load_dotenv
 import httpx
 
@@ -99,7 +100,7 @@ class SolutionViewSet(viewsets.ModelViewSet):
         runtime_error_count = 0
 
         for tc in testcases:
-            output = run_code(language, code, tc.input)
+            output = run_code(language, code, tc.input, problem.time_limit)
             actual = output.strip()
             expected = tc.output.strip()
 
@@ -157,7 +158,10 @@ class SolutionViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
 
 
-def run_code(language, code, input_data, time_limit=2, memory_limit=128*1024*1024):
+def run_code(language, code, input_data, time_limit, memory_limit=128*1024*1024):
+    print(time_limit)
+    time_limit = float(time_limit)
+    memory_limit = int(memory_limit)
     project_path = Path(settings.BASE_DIR)
     directories = ["codes", "inputs", "outputs"]
 
@@ -214,7 +218,7 @@ def run_code(language, code, input_data, time_limit=2, memory_limit=128*1024*102
                             stdout=output_file,
                             stderr=subprocess.PIPE,
                             text=True,               # Capture error
-                            timeout=2,               # Example: 2 seconds for TLE
+                            timeout=time_limit,             
                         )
                         if result.returncode != 0:
                             return "Runtime Error!!!\n" + result.stderr.strip()
@@ -222,32 +226,59 @@ def run_code(language, code, input_data, time_limit=2, memory_limit=128*1024*102
                         return "Time Limit Exceeded"
         else:
             return "Compilation Error!!!\n" + compile_result.stderr.strip()
-    elif language == "python":
-        # Code for executing Python script
-        with open(input_file_path, "r") as input_file:
-            with open(output_file_path, "w") as output_file:
-                subprocess.run(
-                    ["python3", str(code_file_path)],
-                    stdin=input_file,
-                    stdout=output_file,
-                    stderr=output_file,
-                )
 
     elif language == 'c':
         executable_path = codes_dir / unique
         compile_result = subprocess.run(
-            ["clang", str(code_file_path), "-o", str(executable_path)]
+            ["clang", str(code_file_path), "-o", str(executable_path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
         )
         if compile_result.returncode == 0:
             with open(input_file_path, "r") as input_file:
                 with open(output_file_path, "w") as output_file:
-                    subprocess.run(
-                        [str(executable_path)],
+                    try:
+                        result = subprocess.run(
+                            [str(executable_path)],
+                            stdin=input_file,
+                            stdout=output_file,
+                            stderr=subprocess.PIPE,
+                            text=True,               # Capture error
+                            timeout=time_limit,             
+                        )
+                        if result.returncode != 0:
+                            return "Runtime Error!!!\n" + result.stderr.strip()
+                    except subprocess.TimeoutExpired:
+                        return "Time Limit Exceeded"
+        else:
+            return "Compilation Error!!!\n" + compile_result.stderr.strip()
+        
+    elif language == "python":
+        # Code for executing Python script
+        with open(input_file_path, "r") as input_file:
+            with open(output_file_path, "w") as output_file:
+                try:
+                    result = subprocess.run(
+                        ["python3", str(code_file_path)],
                         stdin=input_file,
                         stdout=output_file,
-                        stderr=output_file,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        timeout=time_limit,
+                        start_new_session=True  # Start new process group
                     )
+                    if result.returncode != 0:
+                        return "Runtime Error!!!\n" + result.stderr.strip()
+                except subprocess.TimeoutExpired as e:
+                    # Kill the entire process group
+                    try:
+                        os.killpg(e.pid, signal.SIGKILL)
+                    except Exception:
+                        pass
+                    return "Time Limit Exceeded"
 
+                
     # Write solution as public class Main { public static void main () { ... }}
     elif language == "java":
         import re
@@ -275,14 +306,25 @@ def run_code(language, code, input_data, time_limit=2, memory_limit=128*1024*102
         ])
 
         # If compilation succeeded, run the class
+        # ["java", "-cp", str(codes_dir), class_name],
         if compile_result.returncode == 0:
-            with open(input_file_path, "r") as input_file, open(output_file_path, "w") as output_file:
-                subprocess.run(
-                    ["java", "-cp", str(codes_dir), class_name],
-                    stdin=input_file,
-                    stdout=output_file,
-                    stderr=output_file
-                )
+            with open(input_file_path, "r") as input_file:
+                with open(output_file_path, "w") as output_file:
+                    try:
+                        result = subprocess.run(
+                            ["java", "-cp", str(codes_dir), class_name],
+                            stdin=input_file,
+                            stdout=output_file,
+                            stderr=subprocess.PIPE,
+                            text=True,               # Capture error
+                            timeout=time_limit,             
+                        )
+                        if result.returncode != 0:
+                            return "Runtime Error!!!\n" + result.stderr.strip()
+                    except subprocess.TimeoutExpired:
+                        return "Time Limit Exceeded"
+        else:
+            return "Compilation Error!!!\n" + compile_result.stderr.strip()
 
 
     # Read the output from the output file
@@ -369,8 +411,8 @@ def solution_list_api(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def solved_problems_api(request):
-    solutions = Solution.objects.filter(written_by=request.user).select_related('problem')
-    problems = {s.problem for s in solutions}
+    accepted_solutions = Solution.objects.filter(written_by=request.user, verdict="Accepted").select_related('problem')
+    problems = {s.problem for s in accepted_solutions}
     serializer = ProblemSerializer(problems, many=True)
     return Response(serializer.data)
 
@@ -415,15 +457,17 @@ def leaderboard(request):
 @api_view(['POST'])
 # @permission_classes([IsAuthenticated])  # Optional: only if login is required to run
 def run_code_api(request):
+    problem = request.data.get("problem")
     language = request.data.get("language")
     code = request.data.get("code")
     input_data = request.data.get("input_data", "")
+    print(problem)
 
     if not all([language, code]):
         return Response({"error": "Language and code are required."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        output = run_code(language, code, input_data)
+        output = run_code(language, code, input_data, time_limit=problem['time_limit'])
         return Response({"output": output})
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -449,6 +493,8 @@ def problem_detail_api(request, pk):
             "statement": problem.statement,
             "difficulty": problem.difficulty,
             "written_by": problem.written_by.username,
+            "time_limit": problem.time_limit,
+            "memory_limit": problem.memory_limit,
         }
         return JsonResponse(data)
     except Problem.DoesNotExist:
