@@ -28,7 +28,7 @@ function Dashboard() {
             ) : (
                 <Link to="/problems">
                     <button className="bg-green-600 text-white px-6 py-3 rounded-xl text-lg hover:bg-green-700 transition mb-8">
-                        Explore Problems
+                        Problem Catalog
                     </button>
                 </Link>
             )}

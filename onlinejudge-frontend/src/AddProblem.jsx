@@ -1,4 +1,4 @@
-import API from './api'; // Axios instance (or just use axios)
+import API from './api'; // Axios instance
 import { useState } from 'react';
 
 function AddProblem() {
@@ -6,11 +6,24 @@ function AddProblem() {
     name: '',
     statement: '',
     difficulty: 'easy',
+    time_limit: '',
+    memory_limit: '',
   });
+
+  const [inputFiles, setInputFiles] = useState([]);
+  const [outputFiles, setOutputFiles] = useState([]);
   const [message, setMessage] = useState('');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleInputFiles = (e) => {
+    setInputFiles(e.target.files);
+  };
+
+  const handleOutputFiles = (e) => {
+    setOutputFiles(e.target.files);
   };
 
   const handleSubmit = (e) => {
@@ -22,11 +35,30 @@ function AddProblem() {
       return;
     }
 
-    API.post('/api/problems/', form)
-      .then(() => setMessage("Problem added successfully!"))
+    const formData = new FormData();
+
+    // Add problem fields
+    Object.entries(form).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
+    // Add test case files
+    Array.from(inputFiles).forEach((file) => {
+      formData.append("input_files", file);
+    });
+    Array.from(outputFiles).forEach((file) => {
+      formData.append("output_files", file);
+    });
+
+    API.post('/api/problems/', formData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    })
+      .then(() => setMessage("✅ Problem added successfully!"))
       .catch((err) => {
         console.error(err);
-        setMessage("Problem addition failed");
+        setMessage("❌ Problem addition failed");
       });
   };
 
@@ -42,7 +74,7 @@ function AddProblem() {
             name="name"
             onChange={handleChange}
             required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2"
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2"
           />
         </div>
 
@@ -51,10 +83,10 @@ function AddProblem() {
           <textarea
             id="statement"
             name="statement"
-            rows={10}
+            rows={8}
             onChange={handleChange}
             required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2"
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2"
           />
         </div>
 
@@ -64,9 +96,8 @@ function AddProblem() {
             id="difficulty"
             name="difficulty"
             onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2"
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2"
           >
-            <option value="">Select Difficulty</option>
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
@@ -75,7 +106,7 @@ function AddProblem() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="time_limit" className="block text-sm font-medium text-gray-700">Time Limit (in seconds)</label>
+            <label htmlFor="time_limit" className="block text-sm font-medium text-gray-700">Time Limit (sec)</label>
             <input
               type="number"
               id="time_limit"
@@ -83,12 +114,12 @@ function AddProblem() {
               onChange={handleChange}
               required
               min={1}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2"
             />
           </div>
 
           <div>
-            <label htmlFor="memory_limit" className="block text-sm font-medium text-gray-700">Memory Limit (in MB)</label>
+            <label htmlFor="memory_limit" className="block text-sm font-medium text-gray-700">Memory Limit (MB)</label>
             <input
               type="number"
               id="memory_limit"
@@ -96,9 +127,31 @@ function AddProblem() {
               onChange={handleChange}
               required
               min={1}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Input Files</label>
+          <input
+            type="file"
+            multiple
+            name="input_files"
+            onChange={handleInputFiles}
+            className="mt-1 block w-full text-sm text-gray-500 file:border file:border-gray-300 file:rounded file:px-3 file:py-1 file:bg-white"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Output Files</label>
+          <input
+            type="file"
+            multiple
+            name="output_files"
+            onChange={handleOutputFiles}
+            className="mt-1 block w-full text-sm text-gray-500 file:border file:border-gray-300 file:rounded file:px-3 file:py-1 file:bg-white"
+          />
         </div>
 
         <div className="flex justify-end">

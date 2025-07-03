@@ -6,6 +6,7 @@ from django.contrib import messages
 from .models import Profile, Problem, Topic, ProblemForm, TestCase, TestCaseForm, Solution, Discussion, Comment, SolutionForm, RegisterForm
 from django.db.models import Q, F, Count
 from django.http import HttpResponseForbidden, JsonResponse
+from django.core.files.storage import default_storage
 from django.conf import settings
 import uuid
 import subprocess
@@ -48,12 +49,27 @@ class ProblemViewSet(viewsets.ModelViewSet):
             return [permissions.IsAuthenticated(), IsStaffUser()]
         return [permissions.AllowAny()]  # Read-only access to everyone
 
-    def perform_create(self, serializer):
-        serializer.save(written_by=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        problem = serializer.save(written_by=request.user)
+
+        # Handle file pairs as input/output test cases
+        input_files = request.FILES.getlist('input_files')
+        output_files = request.FILES.getlist('output_files')
+
+        if len(input_files) != len(output_files):
+            return Response({"detail": "Mismatch between number of input and output files."}, status=400)
+
+        for input_file, output_file in zip(input_files, output_files):
+            TestCase.objects.create(problem=problem, input_file=input_file, output_file=output_file, written_by=request.user)
+
+        return Response(self.get_serializer(problem).data, status=status.HTTP_201_CREATED)
 
 def get_ai_feedback(code, language):
     prompt = f"Review this {language} code:\n\n{code}\n\nBriefly comment on its quality, improvements, and logic."
 
+    # print(f"Code: {code}, Language: {language}")
     try:
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -100,9 +116,17 @@ class SolutionViewSet(viewsets.ModelViewSet):
         runtime_error_count = 0
 
         for tc in testcases:
-            output = run_code(language, code, tc.input, problem.time_limit)
+            try:
+                with default_storage.open(tc.input_file.name, 'r') as f:
+                    input_text = f.read()
+
+                with default_storage.open(tc.output_file.name, 'r') as f:
+                    expected_output = f.read()
+            except Exception as e:
+                return Response({"error": f"Error reading test case files: {str(e)}"}, status=500)
+            output = run_code(language, code, input_text, problem.time_limit)
             actual = output.strip()
-            expected = tc.output.strip()
+            expected = expected_output.strip()
 
             if actual == expected:
                 verdict = "Passed"
@@ -121,7 +145,7 @@ class SolutionViewSet(viewsets.ModelViewSet):
                 verdict = "Failed"
 
             results.append({
-                "input": tc.input,
+                "input": input_text,
                 "expected": expected,
                 "actual": actual,
                 "verdict": verdict
@@ -138,7 +162,7 @@ class SolutionViewSet(viewsets.ModelViewSet):
         else:
             final_verdict = "Wrong Answer"
 
-        ai_feedback = get_ai_feedback(request.data["code"], request.data["language"])
+        # ai_feedback = get_ai_feedback(request.data["code"], request.data["language"])
 
         solution = Solution.objects.create(
             written_by=request.user,
@@ -146,7 +170,8 @@ class SolutionViewSet(viewsets.ModelViewSet):
             code=code,
             language=language,
             verdict=final_verdict,
-            ai_feedback=ai_feedback,
+            passed_count=passed_count,
+            total_count=len(testcases)
         )
 
         serializer = self.get_serializer(solution)
@@ -154,7 +179,6 @@ class SolutionViewSet(viewsets.ModelViewSet):
             "solution": serializer.data,
             "verdict": final_verdict,
             "results": results,
-            "ai_feedback": ai_feedback,
         }, status=status.HTTP_201_CREATED)
 
 
@@ -392,14 +416,14 @@ def user_profile(request):
 @api_view(['GET'])
 def problem_list_api(request):
     problems = Problem.objects.all()
-    serializer = ProblemSerializer(problems, many=True)
+    serializer = ProblemSerializer(problems, many=True, context={'request': request})
     return Response(serializer.data)
 
 @api_view(['GET'])
 def topicwise_problem_list_api(request, pk):
     topic = Topic.objects.get(pk=pk)
     problems = Problem.objects.filter(topic=topic)
-    serializer = ProblemSerializer(problems, many=True)
+    serializer = ProblemSerializer(problems, many=True, context={'request': request})
     return Response(serializer.data)
 
 @api_view(['GET'])
@@ -411,9 +435,15 @@ def solution_list_api(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def solved_problems_api(request):
-    accepted_solutions = Solution.objects.filter(written_by=request.user, verdict="Accepted").select_related('problem')
-    problems = {s.problem for s in accepted_solutions}
-    serializer = ProblemSerializer(problems, many=True)
+    accepted_solutions = Solution.objects.filter(
+        written_by=request.user,
+        verdict="Accepted",
+        problem__isnull=False
+    ).select_related('problem')
+
+    problems = {s.problem for s in accepted_solutions if s.problem}
+    problems = list(problems)
+    serializer = ProblemSerializer(problems, many=True, context={'request': request})
     return Response(serializer.data)
 
 @api_view(['GET'])
@@ -484,21 +514,14 @@ def ai_review_api(request):
 
 
 #Another DRF-React view
+@api_view(['GET'])
 def problem_detail_api(request, pk):
     try:
         problem = Problem.objects.get(pk=pk)
-        data = {
-            "id": problem.id,
-            "name": problem.name,
-            "statement": problem.statement,
-            "difficulty": problem.difficulty,
-            "written_by": problem.written_by.username,
-            "time_limit": problem.time_limit,
-            "memory_limit": problem.memory_limit,
-        }
-        return JsonResponse(data)
+        serializer = ProblemSerializer(problem, context={'request': request})
+        return Response(serializer.data)
     except Problem.DoesNotExist:
-        return JsonResponse({"error": "Problem not found"}, status=404)
+        return Response({"error": "Problem not found"}, status=404)
     
 def solution_detail_api(request, pk):
     try:
@@ -528,220 +551,3 @@ def discussion_detail_api(request, pk):
         return JsonResponse(data)
     except:
         return JsonResponse({"error", "Discussion not found"}, status=404)
-
-def dashboard(request):
-    return render(request, "dashboard.html")
-
-def profile(request):
-     # Filter user's accepted solutions
-    solutions = Solution.objects.filter(written_by=request.user, verdict="accepted")
-    
-    # Extract unique problem instances
-    problems_solved = Problem.objects.filter(
-        id__in=solutions.values_list('problem_id', flat=True).distinct()
-    )
-
-    context = {
-        'problems_solved': problems_solved,
-        'solutions': solutions,
-    }
-
-    return render(request, "profile.html", context)
-
-def problist(request):
-    problems=Problem.objects.all()
-
-    return render(request, "problist.html", {"problems":problems})
-
-def probdisp(request, pk):
-    problem=Problem.objects.get(pk=pk)
-    form=SolutionForm()
-    context={"problem":problem, "form": form}
-    # context={}
-    return render(request, "probdisp.html", context)
-
-def register_user(request):
-    if request.method == 'POST':
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-            role = form.cleaned_data['role']
-            if User.objects.filter(username=username).exists():
-                messages.info(request, 'User with this username already exists')
-                return redirect("/register/")
-
-            if User.objects.filter(email=email).exists():
-                messages.info(request, 'User with this email already exists')
-                return redirect("/register/")
-            
-            user = User.objects.create_user(username=username, email=email)
-
-            user.set_password(password)
-
-            user.save()
-
-            # Create the profile 
-            Profile.objects.create(user=user, role=role)
-            
-            messages.info(request,'User created successfully')
-            return redirect('/login/')
-
-    form = RegisterForm()
-    context={'form':form}
-    return render(request, "register.html", context)
-    
-    
-
-def login_user(request):
-
-    if request.method == "POST":
-        login_input = request.POST.get('username')
-        password = request.POST.get('password')
-
-        try:
-            # Try to fetch user by username or email
-            user_obj = User.objects.get(Q(username=login_input) | Q(email=login_input))
-        except User.DoesNotExist:
-            messages.info(request, 'User with this username/email does not exist')
-            return redirect('/login/')
-        
-        user = authenticate(username=user_obj.username, password=password)
-
-        if user is None:
-            messages.info(request,'invalid password')
-            return redirect('/login')
-        
-
-        login(request,user)
-        messages.info(request,'login successful')
-
-        return redirect('/')
-    
-    context ={}
-    return render(request, "login.html", context)
-
-def logout_user(request):
-    logout(request)
-    messages.info(request,'logout successful')
-    return redirect('/')
-
-@login_required
-def add_problem(request):
-    if request.user.profile.role != 'staff':
-        return HttpResponseForbidden("Only staff can add problems")
-    if request.method=="POST":
-        form = ProblemForm(request.POST)
-        if form.is_valid():
-            problem = form.save(commit=False)
-            problem.written_by=request.user
-            problem.save()
-            return redirect('/problist/')
-        
-    form=ProblemForm()
-    context={"form":form}
-    return render(request, "addprob.html", context)
-
-def update_problem(request, pk):
-    problem = Problem.objects.get(pk=pk)
-
-    if request.method == 'POST':
-        form = ProblemForm(request.POST, instance=problem)
-        if form.is_valid():
-            updated_problem = form.save(commit=False)
-            updated_problem.written_by = problem.written_by  # retain original user
-            updated_problem.save()
-            return redirect('/problist/')
-    else:
-        form = ProblemForm(instance=problem)
-
-    context = {"form": form}
-    return render(request, "addprob.html", context)
-
-def delete_problem(request, pk):
-    problem = Problem.objects.get(pk=pk)
-    if problem:
-        problem.delete()
-        messages.info(request,'Deleted Successfully')
-
-    return redirect('/problist/')
-
-def add_testcase(request, pk):
-    if request.method=='POST':
-        form = TestCaseForm(request.POST)
-        if form.is_valid():
-            tc=form.save(commit=False)
-            Tc=TestCase.objects.filter(input=tc.input)
-            if Tc.exists():
-                messages.info(request, 'Test case with given input already exists')
-                return redirect(f"/addtestcase/{pk}")
-            tc.problem=Problem.objects.get(pk=pk)
-            tc.written_by=request.user
-            tc.save()
-
-            return redirect(f"/testcaselist/{pk}")
-        
-    form= TestCaseForm()
-    context={"form":form}
-    return render(request, "addtc.html", context)
-
-def testcase_list(request, pk):
-    problem=Problem.objects.get(pk=pk)
-    tcs=TestCase.objects.filter(problem=problem)
-
-    return render(request, "tclist.html", {"cases":tcs, "problem":problem})
-
-def update_testcase(request, pid, cid):
-    problem=Problem.objects.get(pk=pid)
-    tc=TestCase.objects.get(pk=cid)
-
-    if request.method=='POST':
-        form = TestCaseForm(request.POST, instance=tc)
-        if form.is_valid():
-            tc=form.save(commit=False)
-            tc.problem=problem
-            tc.written_by=request.user
-            tc.save()
-
-            return redirect(f"/testcaselist/{pid}")
-        
-    form= TestCaseForm(instance=tc)
-    context={"form":form}
-    return render(request, "addtc.html", context)
-
-def delete_testcase(request, pid, cid):
-    tc=TestCase.objects.get(pk=cid)
-    if tc:
-        tc.delete()
-
-    return redirect(f"/testcaselist/{pid}")
-
-def solution_list(request, pid):
-    problem=Problem.objects.get(pk=pid)
-    solutions=Solution.objects.filter(problem=problem)
-    context={"solutions":solutions}
-    return render(request, "sollist.html", context)
-
-@login_required
-def add_solution(request, pid):
-    if (request.method=='POST'):
-        form=SolutionForm(request.POST)
-        solution=form.save(commit=False)
-        solution.problem=Problem.objects.get(pk=pid)
-        solution.verdict="accepted"
-        solution.written_by=request.user
-        solution.save()
-
-        return redirect(f'/probdisp/{pid}')
-    
-def mysolutions_list(request, pid):
-    problem=Problem.objects.get(pk=pid)
-    solutions=Solution.objects.filter(problem=problem, written_by=request.user)
-    context={"solutions":solutions}
-    return render(request, "sollist.html", context)
-
-def solution_disp(request, sid):
-    solution=Solution.objects.get(pk=sid)
-
-    return render(request, 'soldisp.html', {'solution':solution})

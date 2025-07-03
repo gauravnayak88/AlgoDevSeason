@@ -66,8 +66,11 @@ function SolutionDetail() {
 
             <div>
                 <p className="text-gray-700 font-semibold mb-1">Code:</p>
-                <div className="whitespace-pre-wrap break-words bg-gray-100 p-4 rounded-md shadow-inner font-mono text-sm">
-                    {solution.code}
+                <div
+                    className="whitespace-pre font-mono text-sm bg-gray-100 p-4 rounded-md shadow-inner overflow-auto"
+                    style={{ maxHeight: "400px", minHeight: "120px" }}
+                >
+                    <pre>{solution.code}</pre>
                 </div>
             </div>
 

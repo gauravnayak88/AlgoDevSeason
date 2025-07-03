@@ -59,8 +59,9 @@ function Solutions() {
                                 <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-2">
                                     <div className="space-y-1">
                                         <p className="text-sm text-gray-700">
-                                            <span className="font-medium">Language:</span> {sol.language}
+                                            <span className="font-medium">Language:</span> {sol.language === 'cpp' ? 'C++' : sol.language}
                                         </p>
+                                        <p><strong>Test Cases Passed:</strong> {sol.passed_count} / {sol.total_count}</p>
                                         <p className="text-sm">
                                             <span className="font-medium">Verdict:</span>{" "}
                                             <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${sol.verdict === "Accepted"

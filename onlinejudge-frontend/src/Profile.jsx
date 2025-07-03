@@ -111,6 +111,9 @@ function Profile() {
                                     </Link>
                                 </li>
                             ))}
+                            {profile.role === 'staff' && solvedProblems?.length === 0 && (
+                                <p className="text-gray-500 italic">No problems solved yet. Try submitting a solution!</p>
+                            )}
                         </ul>
                     </div>
                 </div>
@@ -125,10 +128,14 @@ function Profile() {
                             <Link to={`/solutions/${sub.id}`} className="font-medium text-blue-700 hover:underline">
                                 {problems?.find(p => p.id === sub.problem)?.name || `Problem #${sub.problem}`}
                             </Link>
+                            <p className="text-sm text-gray-700">
+                                <span className="font-medium">Language:</span> {sub.language === 'cpp' ? 'C++' : sub.language}
+                            </p>
+                            <p><strong>Test Cases Passed:</strong> {sub.passed_count} / {sub.total_count}</p>
                             <p className="text-gray-700">
                                 Verdict: <span className={`${sub.verdict === "Accepted" ? "text-green-600" : "text-red-600"}`}>{sub.verdict}</span>
                             </p>
-                                Submitted At: {new Date(sub.submitted_at).toLocaleString("en-IN", options)}
+                            Submitted At: {new Date(sub.submitted_at).toLocaleString("en-IN", options)}
                         </li>
                     ))}
                 </ul>

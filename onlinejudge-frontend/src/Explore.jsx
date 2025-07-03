@@ -6,6 +6,8 @@ function Explore() {
     const [topics, setTopics] = useState(null);
     const [topicWiseProblems, setTopicWiseProblems] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [difficultyFilter, setDifficultyFilter] = useState("");
+
 
     useEffect(() => {
         API.get(`/api/topics/`)
@@ -43,7 +45,8 @@ function Explore() {
             topic: item.topic,
             problems: item.problems
                 .filter(p =>
-                    p.name.toLowerCase().includes(searchQuery.toLowerCase())
+                    p.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+                    (difficultyFilter === "" || p.difficulty.toLowerCase() === difficultyFilter)
                 )
                 .sort((a, b) =>
                     difficultyOrder[a.difficulty.toLowerCase()] -
@@ -56,13 +59,25 @@ function Explore() {
 
     return (
         <div className="p-6">
-            <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search problems..."
-                className="mb-6 w-full p-2 border border-gray-300 rounded"
-            />
+            <div className="flex flex-col md:flex-row md:items-end gap-4 mb-6">
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search problems..."
+                    className="w-full md:w-2/3 p-2 border border-gray-300 rounded"
+                />
+                <select
+                    value={difficultyFilter}
+                    onChange={(e) => setDifficultyFilter(e.target.value)}
+                    className="w-full md:w-1/3 p-2 border border-gray-300 rounded"
+                >
+                    <option value="">All Difficulties</option>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
             <ul className="space-y-6">
                 {filteredTopicWiseProblems.map((item, index) => (
                     <li key={index} className="bg-white shadow rounded-lg border p-6">

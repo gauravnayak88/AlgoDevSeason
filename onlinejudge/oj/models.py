@@ -31,11 +31,12 @@ class Problem(models.Model):
     )
     statement = models.TextField(blank=True)
     name = models.CharField(max_length=50)
+    constraints = models.TextField(blank=True)
     difficulty = models.CharField(choices=DIFFICULTY, max_length=10)
     time_limit = models.DecimalField(max_digits=6, decimal_places=2)
     memory_limit = models.DecimalField(max_digits=6, decimal_places=2)
     date_added = models.DateField(auto_now_add=True)
-    topic = models.ManyToManyField(Topic)
+    topics = models.ManyToManyField(Topic)
 
     def __str__(self):
         return self.name
@@ -50,23 +51,23 @@ class Solution(models.Model):
     input_data=models.TextField(blank=True, default='')
     output_data=models.TextField(blank=True, default='')
     written_by=models.ForeignKey(User, on_delete=models.CASCADE)
+    passed_count = models.PositiveIntegerField(default=0)
+    total_count = models.PositiveIntegerField(default=0)
     verdict=models.CharField(max_length=20)
-    ai_feedback = models.TextField(blank=True, null=True)
     submitted_at=models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.problem}-{self.verdict}-{self.written_by}-{self.submitted_at}"
 
 class TestCase(models.Model):
-    input=models.TextField()
-    output=models.TextField()
+    input_file = models.FileField(upload_to='testcases/inputs/')
+    output_file = models.FileField(upload_to='testcases/outputs/')
     problem=models.ForeignKey("Problem", on_delete=models.CASCADE, related_name="testcases")
     written_by=models.ForeignKey(User, on_delete=models.CASCADE)
-    contributed_on=models.DateField(auto_now_add=True)
     is_sample=models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.input} for {self.problem.id}"
+        return f"{self.input_file} for {self.problem.name}"
     
 class Discussion(models.Model):
     title=models.TextField()

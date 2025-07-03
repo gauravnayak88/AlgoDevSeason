@@ -60,28 +60,47 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ['username', 'email', 'role', 'join_date']
 
-class ProblemSerializer(serializers.ModelSerializer):
-    written_by = serializers.SerializerMethodField()
-    
+class SampleTestCaseSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Problem
-        fields = '__all__'
-        read_only_fields = ['written_by']
-
-    def get_written_by(self, obj):
-        return obj.written_by.username
-    
+        model = TestCase
+        fields = ['id', 'input_file', 'output_file']
 
 class TopicSerializer(serializers.ModelSerializer):
     class Meta:
         model= Topic
         fields = ['id', 'name']
 
+class ProblemSerializer(serializers.ModelSerializer):
+    written_by = serializers.SerializerMethodField()
+    sample_test_cases = serializers.SerializerMethodField()
+    topics = TopicSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Problem
+        fields = ['id', 'name', 'statement', 'difficulty','constraints', 'time_limit', 'memory_limit', 'written_by', 'sample_test_cases', 'topics']
+        read_only_fields = ['written_by']
+
+    def get_written_by(self, obj):
+        return obj.written_by.username
+    
+    def get_sample_test_cases(self, obj):
+        request = self.context.get('request')  # <== Required to get full domain
+        return [
+            {
+                'id': tc.id,
+                'input_file': request.build_absolute_uri(tc.input_file.url),
+                'output_file': request.build_absolute_uri(tc.output_file.url)
+            }
+            for tc in obj.testcases.filter(is_sample=True)
+        ]
+    
+
+
 class TestCaseSerializer(serializers.ModelSerializer):
     problem = serializers.CharField(source='problem.name', read_only=True)
     class Meta:
         model= TestCase
-        fields = ['id', 'input', 'output', 'problem', 'written_by', 'contributed_on', 'is_sample']
+        fields = ['id', 'input_file', 'output_file', 'problem', 'written_by', 'contributed_on', 'is_sample']
         read_only_fields = ['written_by', 'contributed_by']
 
 class SolutionSerializer(serializers.ModelSerializer):
@@ -90,10 +109,16 @@ class SolutionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Solution
         fields = '__all__'
-        read_only_fields = ['written_by', 'verdict', 'submitted_at', 'output_data']
+        read_only_fields = ['written_by', 'verdict', 'submitted_at', 'output_data', 'passed_count', 'total_count']
 
     def get_written_by(self, obj):
         return obj.written_by.username
+    
+    def get_passed_count(self, obj):
+        return obj.results.filter(verdict='Passed').count()
+
+    def get_total_count(self, obj):
+        return obj.results.count()
     
 class DiscussionSerializer(serializers.ModelSerializer):
     written_by = serializers.SerializerMethodField() #?
