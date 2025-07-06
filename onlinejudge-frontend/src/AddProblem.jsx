@@ -1,11 +1,13 @@
 import API from './api'; // Axios instance
 import { useState } from 'react';
+import TestCaseUpload from './TestCaseUpload';
 
 function AddProblem() {
   const [form, setForm] = useState({
     name: '',
     statement: '',
     difficulty: 'easy',
+    constraints: '',
     time_limit: '',
     memory_limit: '',
   });
@@ -91,6 +93,17 @@ function AddProblem() {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-gray-600 mt-4">Constraints (Markdown supported)</label>
+          <textarea
+            id="constraints"
+            name="constraints"
+            onChange={handleChange}
+            rows={4}
+            className="w-full border rounded px-3 py-2 font-mono text-sm focus:ring focus:ring-blue-200"
+          />
+        </div>
+
+        <div>
           <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700">Difficulty</label>
           <select
             id="difficulty"
@@ -130,28 +143,6 @@ function AddProblem() {
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2"
             />
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Input Files</label>
-          <input
-            type="file"
-            multiple
-            name="input_files"
-            onChange={handleInputFiles}
-            className="mt-1 block w-full text-sm text-gray-500 file:border file:border-gray-300 file:rounded file:px-3 file:py-1 file:bg-white"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Output Files</label>
-          <input
-            type="file"
-            multiple
-            name="output_files"
-            onChange={handleOutputFiles}
-            className="mt-1 block w-full text-sm text-gray-500 file:border file:border-gray-300 file:rounded file:px-3 file:py-1 file:bg-white"
-          />
         </div>
 
         <div className="flex justify-end">

@@ -1,4 +1,0 @@
-  File "/Users/gauravnayak/Desktop/AlgouniversityDevSeason/Project/AlgoDevSeason/onlinejudge/codes/32855cc3-7236-475a-a353-01cca796977c.python", line 4
-    while(true)
-               ^
-SyntaxError: expected ':'

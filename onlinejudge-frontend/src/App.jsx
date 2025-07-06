@@ -21,6 +21,10 @@ import Explore from './Explore';
 import PostDiscussion from './PostDiscussion';
 import EditDiscussion from './EditDiscussion';
 import Leaderboard from './Leaderboard';
+import Contests from './Contests';
+import ContestDetails from './ContestDetails'
+import Compiler from './Compiler'
+import ContestAdminPanel from './ContestAdminPanel';
 
 
 import './App.css'
@@ -59,29 +63,50 @@ function App() {
   }
 
   return (
-    <Router>
-      <Navbar profile={profile} isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated}/>
-      <Routes>
-        <Route path='' element={<Dashboard />} />
-        <Route path='/login' element={<Login setIsAuthenticated={setIsAuthenticated}/>} />
-        <Route path='/profile' element={<Profile />} />
-        <Route path='/register' element={<Register />} />
-        <Route path='/problems' element={<ProblemList />} />
-        <Route path='/problems/:id' element={<ProblemDetail />} />
-        <Route path='/problems/:id/edit' element={<EditProblem />} />
-        <Route path='/problems/:id/solutions' element={<Solutions />} />
-        <Route path='/problems/:id/testcases' element={<TestCases />} />
-        <Route path='/solutions/:id' element={<SolutionDetail />} />
-        <Route path='/addproblem' element={<AddProblem />} />
-        <Route path='/leaderboard' element={<Leaderboard />} />
-        <Route path='/challenges' element={<Challenges />} />
-        <Route path='/discuss' element={<Discuss />} />
-        <Route path='/discuss/post' element={<PostDiscussion />} />
-        <Route path='/discuss/:id' element={<DiscussionDetails />} />
-        <Route path='/discuss/:id/edit' element={<EditDiscussion />} />
-        <Route path='/explore' element={<Explore />} />
-      </Routes>
-    </Router>
+    <div className="relative min-h-screen">
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          backgroundImage: "url('/backgroundimg.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        <div className="absolute inset-0 bg-white/65" /> {/* Overlay */}
+      </div>
+      <div className="relative z-10">
+        <Router>
+          <Navbar profile={profile} isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
+          <div className="pt-20">
+            <Routes>
+              <Route path='' element={<Dashboard />} />
+              <Route path='/login' element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+              <Route path='/profile' element={<Profile />} />
+              <Route path='/register' element={<Register />} />
+              <Route path='/problems' element={<ProblemList />} />
+              <Route path='/problems/:id' element={<ProblemDetail />} />
+              <Route path='/problems/:id/edit' element={<EditProblem />} />
+              <Route path='/problems/:id/solutions' element={<Solutions />} />
+              <Route path='/problems/:id/testcases' element={<TestCases />} />
+              <Route path='/solutions/:id' element={<SolutionDetail />} />
+              <Route path='/addproblem' element={<AddProblem />} />
+              <Route path='/leaderboard' element={<Leaderboard />} />
+              <Route path='/challenges' element={<Challenges />} />
+              <Route path='/contests' element={<Contests />} />
+              <Route path="/admin/contests" element={<ContestAdminPanel />} />
+              <Route path='/compiler' element={<Compiler />} />
+              <Route path='/contests/:id' element={<ContestDetails />} />
+              <Route path='/discuss' element={<Discuss />} />
+              <Route path='/discuss/post' element={<PostDiscussion />} />
+              <Route path='/discuss/:id' element={<DiscussionDetails />} />
+              <Route path='/discuss/:id/edit' element={<EditDiscussion />} />
+              <Route path='/explore' element={<Explore />} />
+            </Routes>
+          </div>
+        </Router>
+      </div>
+    </div>
   )
 }
 

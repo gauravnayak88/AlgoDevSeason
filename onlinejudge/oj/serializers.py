@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import AuthenticationFailed
-from .models import Profile, Problem, Topic, TestCase, Solution, Discussion, Comment
+from .models import Profile, Problem, Topic, TestCase, Solution, Discussion, Comment, Contest
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.db.models import Q
@@ -73,11 +73,12 @@ class TopicSerializer(serializers.ModelSerializer):
 class ProblemSerializer(serializers.ModelSerializer):
     written_by = serializers.SerializerMethodField()
     sample_test_cases = serializers.SerializerMethodField()
+    non_sample_test_cases = serializers.SerializerMethodField()
     topics = TopicSerializer(many=True, read_only=True)
     
     class Meta:
         model = Problem
-        fields = ['id', 'name', 'statement', 'difficulty','constraints', 'time_limit', 'memory_limit', 'written_by', 'sample_test_cases', 'topics']
+        fields = ['id', 'name', 'statement', 'difficulty', 'constraints', 'time_limit', 'memory_limit', 'written_by', 'sample_test_cases', 'non_sample_test_cases', 'topics']
         read_only_fields = ['written_by']
 
     def get_written_by(self, obj):
@@ -94,14 +95,42 @@ class ProblemSerializer(serializers.ModelSerializer):
             for tc in obj.testcases.filter(is_sample=True)
         ]
     
-
+    def get_non_sample_test_cases(self, obj):
+        request = self.context.get('request')  # <== Required to get full domain
+        return [
+            {
+                'id': tc.id,
+                'input_file': request.build_absolute_uri(tc.input_file.url),
+                'output_file': request.build_absolute_uri(tc.output_file.url)
+            }
+            for tc in obj.testcases.filter(is_sample=False)
+        ]
+    
 
 class TestCaseSerializer(serializers.ModelSerializer):
-    problem = serializers.CharField(source='problem.name', read_only=True)
     class Meta:
         model= TestCase
-        fields = ['id', 'input_file', 'output_file', 'problem', 'written_by', 'contributed_on', 'is_sample']
-        read_only_fields = ['written_by', 'contributed_by']
+        fields = ['id', 'problem', 'input_file', 'output_file', 'is_sample']
+
+class ContestSerializer(serializers.ModelSerializer):
+    created_by = serializers.SerializerMethodField()
+    problems = ProblemSerializer(many=True, read_only=True)
+    is_started = serializers.SerializerMethodField()
+    is_ended = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Contest
+        fields = '__all__'
+
+    def get_created_by(self, obj):
+        return obj.created_by.username
+
+    def get_is_started(self, obj):
+        return obj.is_started()
+
+    def get_is_ended(self, obj):
+        return obj.is_ended()
+
 
 class SolutionSerializer(serializers.ModelSerializer):
     written_by = serializers.SerializerMethodField()

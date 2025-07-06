@@ -1,4 +1,0 @@
-a=int(input())
-while (True):
-    pass
-print(a)

@@ -44,6 +44,26 @@ class Problem(models.Model):
     def formatted_statement(self):
         return mark_safe(markdown.markdown(self.statement))
 
+class Contest(models.Model):
+    name = models.CharField(max_length=200)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    problems = models.ManyToManyField(Problem)
+    joined_users = models.ManyToManyField(User, related_name="joined_contests", blank=True)
+
+    def __str__(self):
+        return f"{self.name}-{self.start_time}"
+
+    def is_started(self):
+        from django.utils import timezone
+        return timezone.now() >= self.start_time
+
+    def is_ended(self):
+        from django.utils import timezone
+        return timezone.now() > self.end_time
+    
+
 class Solution(models.Model):
     problem=models.ForeignKey("Problem", on_delete=models.CASCADE)
     language=models.CharField(choices=LANGUAGES, max_length=20)
@@ -63,7 +83,6 @@ class TestCase(models.Model):
     input_file = models.FileField(upload_to='testcases/inputs/')
     output_file = models.FileField(upload_to='testcases/outputs/')
     problem=models.ForeignKey("Problem", on_delete=models.CASCADE, related_name="testcases")
-    written_by=models.ForeignKey(User, on_delete=models.CASCADE)
     is_sample=models.BooleanField(default=False)
 
     def __str__(self):

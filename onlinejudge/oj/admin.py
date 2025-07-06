@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Profile, Problem, Solution, TestCase, Discussion, Comment, Topic
+from .models import Profile, Problem, Solution, TestCase, Discussion, Comment, Topic, Contest
 from django.contrib.auth.models import User
 
 # Register your models here.
@@ -22,3 +22,4 @@ admin.site.register(Solution)
 admin.site.register(TestCase)
 admin.site.register(Discussion)
 admin.site.register(Comment)
+admin.site.register(Contest)

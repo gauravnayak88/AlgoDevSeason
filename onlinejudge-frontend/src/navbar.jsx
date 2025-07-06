@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
-import { User } from 'lucide-react';
+import { Menu, X, User } from "lucide-react";
 
 function Navbar({ profile, isAuthenticated, setIsAuthenticated }) {
     const navigate = useNavigate();
@@ -13,39 +12,38 @@ function Navbar({ profile, isAuthenticated, setIsAuthenticated }) {
         setIsAuthenticated(false);
         alert("Logged out");
         navigate("/login");
-        setIsOpen(false); // close menu on logout
+        setIsOpen(false);
     };
 
     const handleLinkClick = () => {
-        setIsOpen(false); // close menu after clicking link
+        setIsOpen(false);
     };
 
     return (
-        <nav className="bg-gray-900 text-white border-b border-gray-700 shadow-md">
-            <div className="flex justify-between items-center p-4">
+        <nav className="fixed top-0 left-0 w-full bg-gray-900 text-white border-b border-gray-700 shadow-md z-50">
+            <div className="relative flex items-center justify-between p-4 max-w-7xl mx-auto">
                 {/* Logo / Brand */}
-                <Link to="/" className="text-3xl font-extrabold text-white tracking-wide hover:text-blue-400 transition">
+                <Link to="/" className="text-3xl font-extrabold text-white tracking-wide hover:text-blue-400 transition z-20">
                     G<span className="text-blue-500">C</span>
                 </Link>
 
-                {/* Desktop Navigation */}
-                <div className="hidden lg:flex gap-4 flex-1 justify-center">
-                    <Link to="/"><button className="px-3 py-2 rounded hover:bg-gray-800">Home</button></Link>
-                    <Link to="/explore"><button className="px-3 py-2 rounded hover:bg-gray-800">Explore</button></Link>
-                    <Link to="/problems"><button className="px-3 py-2 rounded hover:bg-gray-800">Problems</button></Link>
+                {/* Centered Desktop Navigation */}
+                <div className="hidden lg:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 gap-4 z-10">
+                    <Link to="/"><button className="px-3 py-2 rounded hover:bg-gray-800 transition">Home</button></Link>
+                    <Link to="/explore"><button className="px-3 py-2 rounded hover:bg-gray-800 transition">Explore</button></Link>
+                    <Link to="/problems"><button className="px-3 py-2 rounded hover:bg-gray-800 transition">Problems</button></Link>
                     {isAuthenticated &&
-                        <Link to="/leaderboard"><button className="px-3 py-2 rounded hover:bg-gray-800">Leaderboard</button></Link>
+                        <Link to="/leaderboard"><button className="px-3 py-2 rounded hover:bg-gray-800 transition">Leaderboard</button></Link>
                     }
-                    <Link to="/challenges"><button className="px-3 py-2 rounded hover:bg-gray-800">Challenges</button></Link>
-                    <Link to="/discuss"><button className="px-3 py-2 rounded hover:bg-gray-800">Discuss</button></Link>
+                    <Link to="/contests"><button className="px-3 py-2 rounded hover:bg-gray-800 transition">Contests</button></Link>
+                    <Link to="/discuss"><button className="px-3 py-2 rounded hover:bg-gray-800 transition">Discuss</button></Link>
                 </div>
 
-                {/* Desktop Auth */}
-                <div className="hidden lg:flex items-center gap-3">
+                {/* Desktop Auth - right aligned */}
+                <div className="hidden lg:flex items-center gap-3 z-20">
                     {isAuthenticated && profile ? (
                         <>
                             <Link to="/profile"><button className="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800"><User size={20} className="text-white" /></button></Link>
-                            {/* <span className="text-sm">Hi, <strong>{profile.username}</strong></span> */}
                             <button
                                 onClick={handleLogout}
                                 className="px-3 py-2 bg-red-600 rounded hover:bg-red-700"
@@ -62,7 +60,7 @@ function Navbar({ profile, isAuthenticated, setIsAuthenticated }) {
                 </div>
 
                 {/* Mobile Toggle */}
-                <div className="lg:hidden">
+                <div className="lg:hidden z-30">
                     <button onClick={() => setIsOpen(!isOpen)}>
                         {isOpen ? <X size={28} /> : <Menu size={28} />}
                     </button>
@@ -81,10 +79,12 @@ function Navbar({ profile, isAuthenticated, setIsAuthenticated }) {
                     <Link to="/problems" onClick={handleLinkClick}>
                         <div className="block py-2 px-2 hover:bg-gray-700 rounded">Problems</div>
                     </Link>
-                    <Link to="/leaderboard" onClick={handleLinkClick}>
-                        <div className="block py-2 px-2 hover:bg-gray-700 rounded">Leaderboard</div>
-                    </Link>
-                    <Link to="/contests" onClick={handleLinkClick}>
+                    {isAuthenticated && (
+                        <Link to="/leaderboard" onClick={handleLinkClick}>
+                            <div className="block py-2 px-2 hover:bg-gray-700 rounded">Leaderboard</div>
+                        </Link>
+                    )}
+                    <Link to="/challenges" onClick={handleLinkClick}>
                         <div className="block py-2 px-2 hover:bg-gray-700 rounded">Contests</div>
                     </Link>
                     <Link to="/discuss" onClick={handleLinkClick}>
@@ -96,7 +96,6 @@ function Navbar({ profile, isAuthenticated, setIsAuthenticated }) {
                             <Link to="/profile" onClick={handleLinkClick}>
                                 <div className="block py-2 px-2 hover:bg-gray-700 rounded">Profile</div>
                             </Link>
-                            {/* <div className="text-sm px-2">Hi, <strong>{profile.username}</strong></div> */}
                             <button
                                 onClick={handleLogout}
                                 className="block w-full text-left py-2 px-2 bg-red-600 hover:bg-red-700 rounded"

@@ -1,4 +1,0 @@
-  File "/Users/gauravnayak/Desktop/AlgouniversityDevSeason/Project/AlgoDevSeason/onlinejudge/codes/e2b5f1d4-c74d-41a7-8e00-0cf35868d3e7.python", line 3
-    using namespace std;
-          ^^^^^^^^^
-SyntaxError: invalid syntax

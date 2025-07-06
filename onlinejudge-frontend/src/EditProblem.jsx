@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "./api";
+import TestCaseUpload from "./TestCaseUpload";
 
 function EditProblem() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+
   const [form, setForm] = useState({
     name: "",
     statement: "",
     difficulty: "easy",
+    constraints: "",
     time_limit: "",
     memory_limit: "",
   });
@@ -64,6 +67,16 @@ function EditProblem() {
         </div>
 
         <div>
+        <label className="block text-sm font-medium text-gray-600 mt-4">Constraints (Markdown supported)</label>
+        <textarea
+          value={form.constraints}
+          onChange={handleChange}
+          rows={4}
+          className="w-full border rounded px-3 py-2 font-mono text-sm focus:ring focus:ring-blue-200"
+        />
+        </div>
+
+        <div>
           <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700">Difficulty</label>
           <select
             id="difficulty"
@@ -107,6 +120,16 @@ function EditProblem() {
             />
           </div>
         </div>
+
+        <fieldset className="border p-4 rounded mb-4">
+          <legend className="font-semibold">Sample Test Cases</legend>
+          <TestCaseUpload isSample={true} />
+        </fieldset>
+
+        <fieldset className="border p-4 rounded mb-4">
+          <legend className="font-semibold">Non-Sample Test Cases</legend>
+          <TestCaseUpload isSample={false} />
+        </fieldset>
 
         <div className="flex justify-end">
           <button

@@ -2,12 +2,34 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import API from './api';
 
+// Optional: Difficulty icon component
+const DifficultyIcon = ({ difficulty }) => {
+    if (difficulty === "easy") return (
+        <svg className="w-4 h-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="10" />
+        </svg>
+    );
+    if (difficulty === "medium") return (
+        <svg className="w-4 h-4 text-yellow-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="10" />
+            <circle cx="10" cy="10" r="5" fill="white" />
+        </svg>
+    );
+    return (
+        <svg className="w-4 h-4 text-red-500 mr-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="2" />
+            <path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" strokeWidth="2" />
+        </svg>
+    );
+};
+
 function ProblemList() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [problems, setProblems] = useState([]);
     const [profile, setProfile] = useState([]);
-    const [searchQuery, setSearchQuery] = useState("");  // 🆕 Search state
-    const [difficultyFilter, setDifficultyFilter] = useState("");  // "" = All
+    const [searchQuery, setSearchQuery] = useState("");
+    const [difficultyFilter, setDifficultyFilter] = useState("");
+    const [solvedProblems, setSolvedProblems] = useState([])
 
     useEffect(() => {
         const token = localStorage.getItem("access");
@@ -27,6 +49,15 @@ function ProblemList() {
             .catch(err => console.log(err));
     }, []);
 
+    useEffect(() => {
+        if (profile) {
+            API.get('/api/problems/solved')
+                .then(res => setSolvedProblems(res.data))
+                .catch(err => console.log(err));
+        }
+    }
+        , [profile])
+
     const filteredProblems = problems.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             p.difficulty.toLowerCase().includes(searchQuery.toLowerCase());
@@ -34,78 +65,107 @@ function ProblemList() {
         return matchesSearch && matchesDifficulty;
     });
 
-    if (!problems) return <p>Loading...</p>;
+    if (!problems)
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+                <span className="ml-4 text-lg text-gray-600">Loading problems...</span>
+            </div>
+        );
 
     return (
-        <div className="p-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h2 className="text-2xl font-bold text-gray-800">Problems</h2>
-
-                <input
-                    type="text"
-                    placeholder="Search by name or difficulty"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="px-4 py-2 rounded border border-gray-300 w-full md:w-64 focus:outline-none focus:ring focus:ring-blue-200"
-                />
-
-                <select
-                    value={difficultyFilter}
-                    onChange={(e) => setDifficultyFilter(e.target.value)}
-                    className="px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-blue-200"
-                >
-                    <option value="">All Difficulties</option>
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
-                </select>
-
+        <div className="max-w-3xl mx-auto p-6">
+            {/* Header and Filters */}
+            <div className="flex flex-col md:flex-row md:items-end gap-4 mb-8">
+                <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Problems</h2>
+                    <input
+                        type="text"
+                        placeholder="🔍 Search by name or difficulty"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                    />
+                </div>
+                <div className="w-full md:w-56">
+                    <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                    <select
+                        id="difficulty"
+                        value={difficultyFilter}
+                        onChange={(e) => setDifficultyFilter(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                    >
+                        <option value="">All Difficulties</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
             </div>
+
+            {/* Contribute Button */}
             {isAuthenticated && profile?.role === 'staff' && (
                 <Link to="/addproblem">
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                        Contribute a problem
+                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition font-semibold mb-6">
+                        + Contribute a problem
                     </button>
-                    <br />
-                    <br />
                 </Link>
             )}
 
+            {/* Problems List */}
             {filteredProblems.length === 0 ? (
-                <p className="text-gray-600">No problems match your search.</p>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4">
-                    {filteredProblems.map(p => (
-                        <Link to={`/problems/${p.id}`} key={p.id}>
-                            <div className="bg-white rounded-xl shadow-md hover:shadow-lg p-6 border border-gray-200 hover:border-gray-300 transition">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">{p.name}</h3>
-                                <span
-                                    className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${p.difficulty.toLowerCase() === 'easy'
-                                        ? 'bg-green-100 text-green-700'
-                                        : p.difficulty.toLowerCase() === 'medium'
-                                            ? 'bg-yellow-100 text-yellow-800'
-                                            : 'bg-red-100 text-red-700'
-                                        }`}
-                                >
-                                    {p.difficulty}
-                                </span>
-                                {p.topics && p.topics.length > 0 && (
-                                    <div className="mb-4">
-                                        <strong className="text-sm text-gray-600">Tags:</strong>{" "}
-                                        {p.topics.map((topic, idx) => (
-                                            <span
-                                                key={idx}
-                                                className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-2 mt-1"
-                                            >
-                                                {topic.name}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </Link>
-                    ))}
+                <div className="mt-16 text-center text-gray-500 text-lg">
+                    <span>No problems match your search.</span>
                 </div>
+            ) : (
+                <ul className="space-y-6">
+                    {filteredProblems.map(p => {
+                        const isSolved = solvedProblems.some(sp => sp.id === p.id);
+                        return (
+                            <li key={p.id}>
+                                <Link to={`/problems/${p.id}`}>
+                                    <div className="relative bg-gradient-to-tr from-blue-50 via-white to-blue-100 rounded-2xl shadow-lg border border-blue-100 hover:shadow-2xl hover:border-blue-200 transition p-6 flex flex-col gap-2">
+                                        {isSolved && (
+                                            <div className="absolute top-2 right-2 text-green-600" title="Accepted">
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center mb-2">
+                                            <DifficultyIcon difficulty={p.difficulty.toLowerCase()} />
+                                            <span className="text-lg font-semibold text-blue-900">{p.name}</span>
+                                        </div>
+                                        <span
+                                            className={`inline-block px-3 py-1 text-xs font-bold rounded-full border self-start
+                                            ${p.difficulty.toLowerCase() === 'easy'
+                                                    ? 'bg-green-50 text-green-700 border-green-200'
+                                                    : p.difficulty.toLowerCase() === 'medium'
+                                                        ? 'bg-yellow-50 text-yellow-800 border-yellow-200'
+                                                        : 'bg-red-50 text-red-700 border-red-200'
+                                                }`}
+                                        >
+                                            {p.difficulty.charAt(0).toUpperCase() + p.difficulty.slice(1)}
+                                        </span>
+                                        {p.topics && p.topics.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {p.topics.map((topic, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                                                    >
+                                                        {topic.name}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </Link>
+                            </li>
+                        )
+                    }
+                    )}
+                </ul>
             )}
         </div>
     );

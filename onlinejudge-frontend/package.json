@@ -10,7 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@codemirror/lang-cpp": "^6.0.3",
+    "@codemirror/lang-java": "^6.0.2",
+    "@codemirror/lang-python": "^6.2.1",
     "@tailwindcss/vite": "^4.1.11",
+    "@uiw/react-codemirror": "^4.23.14",
     "axios": "^1.10.0",
     "github-markdown-css": "^5.8.1",
     "katex": "^0.16.22",

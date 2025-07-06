@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import axios from 'axios';
 import API from "./api";
-import { useNavigate } from "react-router-dom";
 import ReactMarkdown from 'react-markdown';
 import 'github-markdown-css/github-markdown.css'
 import remarkGfm from 'remark-gfm'
@@ -10,34 +9,44 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 import TestCaseViewer from "./TestCaseViewer";
+import SolutionsInline from "./SolutionsInline";
+import SolutionDetailInline from "./SolutionDetailInline";
+import CodeMirror from '@uiw/react-codemirror';
+import { cpp } from '@codemirror/lang-cpp';
+import { java } from '@codemirror/lang-java';
+import { python } from '@codemirror/lang-python';
 
 function ProblemDetail() {
     const { id } = useParams();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [sampleContents, setSampleContents] = useState([]);
-
     const [problem, setProblem] = useState(null);
     const [profile, setProfile] = useState(null);
+    const [activeTab, setActiveTab] = useState("description");
+    const [selectedSolution, setSelectedSolution] = useState(null);
     const [code, setCode] = useState("");
     const [message, setMessage] = useState("");
     const [language, setLanguage] = useState("cpp");
     const [input, setInput] = useState("");
     const [output, setOutput] = useState("");
     const [aiReview, setAiReview] = useState("");
-    const navigate = useNavigate()
+    const [aiHints, setAiHints] = useState("");
+    const [aiGeneratedCode, setAiGeneratedCode] = useState("");
+    const [selectedAIOption, setSelectedAIOption] = useState("review");
+    const [solvedProblems, setSolvedProblems] = useState([])
+    const navigate = useNavigate();
 
     const boilerplate = {
-        cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    // Your code here\n    return 0;\n}`,
-        python: `# Your code here\ndef main():\n    pass\n\nif __name__ == "__main__":\n    main()`,
-        java: `public class Main {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}`,
-        c: `#include <stdio.h>\n\nint main() {\n    // Your code here\n    return 0;\n}`
+        cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n  // Your code here\n  return 0;\n}`,
+        python: `# Your code here\ndef main():\n  pass\n\nif __name__ == "__main__":\n  main()`,
+        java: `public class Main {\n  public static void main(String[] args) {\n      // Your code here\n  }\n}`,
+        c: `#include <stdio.h>\n\nint main() {\n  // Your code here\n  return 0;\n}`
     };
-
 
     useEffect(() => {
         const token = localStorage.getItem("access");
-        setIsAuthenticated(!!token);  // true if token exists
+        setIsAuthenticated(!!token);
     }, []);
 
     useEffect(() => {
@@ -48,19 +57,22 @@ function ProblemDetail() {
     }, [isAuthenticated])
 
     useEffect(() => {
-        // setTimeout(() => {
-        //     API.get(`/api/problems/${id}/`)
-        //         .then(res => setProblem(res.data))
-        //         .catch(err => console.error(err));
-        // }, 1000)
         axios.get(`http://localhost:8000/api/problems/${id}/`)
             .then(res => { setProblem(res.data) })
             .catch(err => console.error(err))
     }, [id]);
 
     useEffect(() => {
-        if (!problem || !problem.sample_test_cases) return;
+        if (profile) {
+            API.get('/api/problems/solved')
+                .then(res => setSolvedProblems(res.data))
+                .catch(err => console.log(err));
+        }
+    }
+        , [profile])
 
+    useEffect(() => {
+        if (!problem || !problem.sample_test_cases) return;
         Promise.all(
             problem.sample_test_cases.map(async (tc) => {
                 const inputText = await fetch(tc.input_file).then(res => res.text());
@@ -75,34 +87,23 @@ function ProblemDetail() {
     }, [problem]);
 
     useEffect(() => {
-        const savedLang = localStorage.getItem(`lang-${id}`) || "cpp";
+        if (!profile) return;
+
+        const savedLang = localStorage.getItem(`lang-${profile.username}-${id}`) || "cpp";
         setLanguage(savedLang);
 
-        const savedCode = localStorage.getItem(`code-${id}-${savedLang}`);
+        const savedCode = localStorage.getItem(`code-${profile.username}-${id}-${savedLang}`);
         if (savedCode !== null) {
             setCode(savedCode);
         } else {
             setCode(boilerplate[savedLang]);
         }
-    }, [id]);
+    }, [id, profile]);
 
-    useLayoutEffect(() => {
-        if (codeRef.current) {
-            codeRef.current.style.height = "auto";
-            codeRef.current.style.height = `${codeRef.current.scrollHeight}px`;
-        }
-    }, [code]);
 
     const handleRun = (e) => {
-        e.preventDefault()
-
+        e.preventDefault();
         setIsProcessing(true);
-        // if (!isAuthenticated) {
-        //     alert("You need to login to run a code.");
-        //     navigate("/login");
-        //     return;
-        // }
-
         API.post("/api/run", {
             problem: problem,
             code: code,
@@ -112,7 +113,6 @@ function ProblemDetail() {
             .then((res) => {
                 setOutput(res.data.output)
                 setMessage("")
-                // setMessage("Code executed successfully!");
             })
             .catch(err => {
                 console.error(err);
@@ -120,7 +120,6 @@ function ProblemDetail() {
                 setMessage("Execution failed.");
             })
             .finally(() => { setIsProcessing(false) });
-
     }
 
     const getAiReview = () => {
@@ -137,52 +136,73 @@ function ProblemDetail() {
             .finally(() => { setIsProcessing(false) })
     }
 
-    const codeRef = useRef(null);
+    const handleAIReview = () => {
+        setIsProcessing(true)
+        API.post('/api/ai-review/', { code, language })
+            .then(res => {
+                setAiReview(res.data.review)
+                setAiGeneratedCode("")
+                setAiHints("")
+            })
+            .catch(() => setAiReview("❌ Review failed."))
+            .finally(() => { setIsProcessing(false) })
+    };
 
-    const handleCodeChange = (e) => {
-        setCode(e.target.value);
-        const currentLang = language;
-        localStorage.setItem(`code-${id}-${currentLang}`, e.target.value);
+    const handleAIHint = () => {
+        setIsProcessing(true)
+        API.post('/api/ai-hint/', {
+            code,
+            language,
+            problem: problem.description || problem.statement || ""
+        })
+            .then(res => {
+                setAiHints(res.data.hint)
+                setAiReview("")
+                setAiGeneratedCode("")
+            })
+            .catch(() => setAiHints("❌ Hint generation failed."))
+            .finally(() => { setIsProcessing(false) })
+    };
 
-        // Auto-resize textarea
-        if (codeRef.current) {
-            codeRef.current.style.height = "auto";
-            codeRef.current.style.height = `${codeRef.current.scrollHeight}px`;
-        }
+    const handleAICodeGen = () => {
+        setIsProcessing(true)
+        API.post('/api/ai-generate/', {
+            language,
+            problem: problem.description || problem.statement || ""
+        })
+            .then(res => {
+                setAiGeneratedCode(res.data.code);
+                setAiReview("")
+                setAiHints("")
+            })
+            .catch(() => setAiGeneratedCode("❌ Code generation failed."))
+            .finally(() => { setIsProcessing(false) })
     };
 
     const handleLanguageChange = (e) => {
         const newLang = e.target.value;
-        const currentLang = language;
-
-        // Save current code for currentLang before switching
-        localStorage.setItem(`code-${id}-${currentLang}`, code);
-
-        // Load code for newLang if exists, otherwise use boilerplate
-        const newLangCode = localStorage.getItem(`code-${id}-${newLang}`);
-        if (newLangCode !== null) {
-            setCode(newLangCode);
-        } else {
-            setCode(boilerplate[newLang]);
+        if (profile) {
+            const currentLang = language;
+            localStorage.setItem(`code-${profile.username}-${id}-${currentLang}`, code);
+            const newLangCode = localStorage.getItem(`code-${profile.username}-${id}-${newLang}`);
+            if (newLangCode !== null) {
+                setCode(newLangCode);
+            } else {
+                setCode(boilerplate[newLang]);
+            }
+            localStorage.setItem(`lang-${profile.username}-${id}`, newLang);
         }
-
         setLanguage(newLang);
-        localStorage.setItem(`lang-${id}`, newLang);
     }
 
     const handleSubmit = (e) => {
         e.preventDefault();
-
         setIsProcessing(true);
-
         if (!isAuthenticated) {
             alert("You need to login to submit a solution.");
             navigate("/login");
             return;
         }
-
-        console.log("Access token:", localStorage.getItem("access"));
-
         API.post('/api/solutions/', {
             problem: id,
             language: language,
@@ -199,11 +219,6 @@ function ProblemDetail() {
                     ))}
                 </ul>
                 )
-                // setAiReview(<div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4">
-                //     <h4 className="font-bold mb-2">AI Review:</h4>
-                //     <p>{res.data.ai_feedback}</p>
-                // </div>)
-                // setOutput(JSON.stringify(res.data.results, null, 2)); // Optional: show detailed feedback
             })
             .catch(err => {
                 console.error(err);
@@ -220,126 +235,147 @@ function ProblemDetail() {
         }
     };
 
-    if (!problem) return <p>Loading</p>;
+    if (!problem) return (
+        <div className="flex items-center justify-center min-h-[40vh]">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
+            <span className="ml-4 text-lg text-gray-600">Loading problem...</span>
+        </div>
+    );
 
     return (
-        <div className="flex flex-wrap gap-8 items-start p-6">
+        <div className="flex flex-col lg:flex-row gap-8 items-start p-6 max-w-7xl mx-auto">
             {/* Left Column - Problem Details */}
             <div className="flex-1 min-w-[300px] max-w-full lg:max-w-[48%]">
-                <h2 className="text-3xl font-bold mb-2 text-gray-800">{problem.name}</h2>
-                <p className="text-gray-700 mb-1">
-                    <strong>Difficulty:</strong>{" "}
-                    <span
-                        className={`inline-block px-2 py-0.5 text-sm rounded-full ${problem.difficulty === "easy"
-                            ? "bg-green-100 text-green-700"
-                            : problem.difficulty === "medium"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
-                    >
-                        {problem.difficulty}
-                    </span>
-                    {problem.topics && problem.topics.length > 0 && (
-                        <div className="mb-4">
-                            <strong className="text-sm text-gray-600">Tags:</strong>{" "}
-                            {problem.topics.map((topic, idx) => (
-                                <span
-                                    key={idx}
-                                    className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-2 mt-1"
-                                >
-                                    {topic.name}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-                </p>
-                <p className="italic text-sm text-gray-500 mb-4">
-                    Contributed by {problem.written_by}
-                </p>
-
-                {isAuthenticated && profile?.role === "staff" && problem.written_by === profile.username && (
-                    <div className="flex gap-2 mb-4">
+                <div className="mb-4 flex space-x-2">
+                    {["description", ...(isAuthenticated ? ["all", "mine"] : [])].map(tab => (
                         <button
-                            onClick={() => navigate(`/problems/${id}/edit`)}
-                            className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            key={tab}
+                            onClick={() => { setActiveTab(tab); setSelectedSolution(null); }}
+                            className={`px-4 py-2 rounded-t-lg font-semibold transition-all duration-200
+                                ${activeTab === tab
+                                    ? "bg-indigo-600 text-white shadow"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                }`}
                         >
-                            Edit
+                            {tab === "description" ? "Description"
+                                : tab === "all" ? "All Solutions"
+                                    : "My Submissions"}
                         </button>
-                        <button
-                            onClick={handleDelete}
-                            className="px-4 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                        >
-                            Delete
-                        </button>
-                    </div>
-                )}
-
-                <div className="prose max-w-none bg-gray-50 p-4 rounded-md shadow-inner mb-4 overflow-auto">
-                    <ReactMarkdown
-                        remarkPlugins={[remarkGfm, remarkMath]}
-                        rehypePlugins={[rehypeKatex]}
-                        components={{
-                            p: ({ children }) => <p className="mb-4">{children}</p>,
-                            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
-                            h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
-                            li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
-                            pre: ({ children }) => <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">{children}</pre>,
-                            code: ({ children }) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">{children}</code>,
-                        }}
-                    >
-                        {problem.statement}
-                    </ReactMarkdown>
-
-                    {problem.sample_test_cases.length > 0 && (
-                        <div className="bg-gray-50 p-4 rounded-md shadow-inner mb-4">
-                            <h4 className="text-lg font-semibold mb-2">Sample Test Cases</h4>
-                            <ul className="space-y-4 text-sm font-mono">
-                                {problem.sample_test_cases.map((tc, idx) => (
-                                    <li key={tc.id}>
-                                        <strong><h3>Example {idx}:</h3></strong><br />
-                                        <strong>Input {idx + 1}:</strong><br />
-                                        <TestCaseViewer fileUrl={tc.input_file} />
-                                        <br />
-                                        <strong>Output {idx + 1}:</strong><br />
-                                        <TestCaseViewer fileUrl={tc.output_file} />
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                    <h3>Constraints:</h3><br />
-
-                    <ReactMarkdown
-                        remarkPlugins={[remarkGfm, remarkMath]}
-                        rehypePlugins={[rehypeKatex]}
-                        components={{
-                            p: ({ children }) => <p className="mb-4">{children}</p>,
-                            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
-                            h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
-                            li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
-                            pre: ({ children }) => <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">{children}</pre>,
-                            code: ({ children }) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">{children}</code>,
-                        }}
-                    >
-                        {problem.constraints}
-                    </ReactMarkdown>
-
+                    ))}
                 </div>
 
-                <div className="flex gap-3 flex-wrap">
-                    {isAuthenticated &&
-                        <Link to={`/problems/${problem.id}/solutions`}>
-                            <button className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                                View Submissions
-                            </button>
-                        </Link>
-                    }
-                    {isAuthenticated && profile?.role === "staff" && (
-                        <Link to={`/problems/${problem.id}/testcases`}>
-                            <button className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
-                                View Test Cases
-                            </button>
-                        </Link>
+                <div className="bg-white rounded-xl shadow p-6">
+                    {activeTab === "description" && (
+                        <div>
+                            <h2 className="text-3xl font-bold mb-2 text-gray-800">{problem.name}</h2>
+                            {solvedProblems.some(p => p.id === problem.id) && <p className="text-green-600 font-semibold">Solved ✅</p>}
+                            <div className="flex items-center gap-3 mb-2">
+                                <span
+                                    className={`inline-block px-3 py-1 text-sm rounded-full font-semibold
+                                        ${problem.difficulty === "easy"
+                                            ? "bg-green-100 text-green-700"
+                                            : problem.difficulty === "medium"
+                                                ? "bg-yellow-100 text-yellow-800"
+                                                : "bg-red-100 text-red-700"
+                                        }`}
+                                >
+                                    {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
+                                </span>
+                                {problem.topics && problem.topics.map((topic, idx) => (
+                                    <span
+                                        key={idx}
+                                        className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-2"
+                                    >
+                                        {topic.name}
+                                    </span>
+                                ))}
+                            </div>
+                            <p className="italic text-sm text-gray-500 mb-4">
+                                Contributed by {problem.written_by}
+                            </p>
+
+                            {isAuthenticated && profile?.role === "staff" && problem.written_by === profile.username && (
+                                <div className="flex gap-2 mb-4">
+                                    <button
+                                        onClick={() => navigate(`/problems/${id}/edit`)}
+                                        className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={handleDelete}
+                                        className="px-4 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            )}
+
+                            <div className="prose max-w-none bg-gray-50 p-4 rounded-md shadow-inner mb-4 overflow-auto markdown-body">
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm, remarkMath]}
+                                    rehypePlugins={[rehypeKatex]}
+                                >
+                                    {problem.statement}
+                                </ReactMarkdown>
+                                {problem.sample_test_cases.length > 0 && (
+                                    <div className="bg-gray-50 p-4 rounded-md shadow-inner mb-4">
+                                        <h4 className="text-lg font-semibold mb-2">Sample Test Cases</h4>
+                                        <ul className="space-y-4 text-sm font-mono">
+                                            {problem.sample_test_cases.map((tc, idx) => (
+                                                <li key={tc.id}>
+                                                    <strong>Example {idx + 1}:</strong><br />
+                                                    <strong>Input:</strong><br />
+                                                    <TestCaseViewer fileUrl={tc.input_file} />
+                                                    <br />
+                                                    <strong>Output:</strong><br />
+                                                    <TestCaseViewer fileUrl={tc.output_file} />
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                <h3>Constraints:</h3>
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm, remarkMath]}
+                                    rehypePlugins={[rehypeKatex]}
+                                >
+                                    {problem.constraints}
+                                </ReactMarkdown>
+                            </div>
+                            <div className="flex gap-3 flex-wrap">
+                                {isAuthenticated &&
+                                    <>
+                                        <Link to={`/problems/${problem.id}/solutions`}>
+                                            <button className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                                                View Submissions
+                                            </button>
+                                        </Link>
+                                        <Link to={`/problems/${problem.id}/testcases`}>
+                                            <button className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                                                View Test Cases
+                                            </button>
+                                        </Link>
+                                    </>
+                                }
+                            </div>
+                        </div>
+                    )}
+
+                    {(activeTab === "all" || activeTab === "mine") && (
+                        <SolutionsInline
+                            problemId={problem.id}
+                            filterMine={activeTab === "mine"}
+                            profile={profile}
+                            onSelect={(sol) => {
+                                setSelectedSolution(sol);
+                                setActiveTab("detail");
+                            }}
+                        />
+                    )}
+
+                    {activeTab === "detail" && selectedSolution && (
+                        <SolutionDetailInline solution={selectedSolution} />
                     )}
                 </div>
             </div>
@@ -362,15 +398,23 @@ function ProblemDetail() {
                     </select>
 
                     <label className="block text-sm font-medium text-gray-600">Code</label>
-                    <textarea
-                        ref={codeRef}
-                        rows={10}
-                        placeholder="Write your code here..."
+                    <CodeMirror
                         value={code}
-                        onChange={handleCodeChange}
-                        required
-                        className="w-full border rounded px-3 py-2 font-mono text-sm focus:ring focus:ring-blue-200 resize-none overflow-auto"
-                        style={{ maxHeight: "400px", minHeight: "200px" }}
+                        height="200px"
+                        extensions={[
+                            language === "cpp" ? cpp() :
+                                language === "c" ? cpp() :
+                                    language === "java" ? java() :
+                                        language === "python" ? python() :
+                                            []
+                        ]}
+                        onChange={(value) => {
+                            setCode(value);
+                            const currentLang = language;
+                            localStorage.setItem(`code-${profile.username}-${id}-${language}`, value);
+                        }}
+                        theme="light"
+                        className="border rounded-md"
                     />
 
                     <div className="text-sm text-gray-600 mt-1">
@@ -403,7 +447,7 @@ function ProblemDetail() {
                                     d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 11-8 8z"
                                 ></path>
                             </svg>
-                            <span>Running your code...</span>
+                            <span>Processing...</span>
                         </div>
                     )}
 
@@ -414,7 +458,6 @@ function ProblemDetail() {
                         </div>
                     )}
 
-                    {/* {message && <p className="text-red-600">{message}</p>} */}
                     {message && <span className={`font-semibold px-2 py-0.5 rounded ${message === "Accepted"
                         ? "bg-green-100 text-green-700"
                         : message === "Wrong Answer"
@@ -441,17 +484,111 @@ function ProblemDetail() {
                         </button>
                     </div>
 
-                    <button type="button" onClick={getAiReview} className="mt-3 md:mt-0 px-4 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                        AI Review
-                    </button>
+                    <div className="flex items-center gap-3 mt-6">
+                        <select
+                            value={selectedAIOption}
+                            onChange={(e) => setSelectedAIOption(e.target.value)}
+                            className="border px-3 py-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
+                        >
+                            <option value="review">AI Review</option>
+                            <option value="hint">AI Hint</option>
+                            <option value="code">AI Code</option>
+                        </select>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (selectedAIOption === "review") handleAIReview();
+                                else if (selectedAIOption === "hint") handleAIHint();
+                                else if (selectedAIOption === "code") handleAICodeGen();
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            disabled={isProcessing}
+                        >
+                            Go
+                        </button>
+                    </div>
 
-                    {aiReview &&
+
+                    {(aiReview || aiHints || aiGeneratedCode) && (
                         <div>
-                            <div className="whitespace-pre-wrap break-words bg-gray-100 p-4 rounded-md shadow-inner font-mono text-sm">
-                                {aiReview}
-                            </div>
+                            {selectedAIOption === "review" && aiReview && (
+                                <div className="whitespace-pre-wrap break-words bg-gray-100 p-4 rounded-md shadow-inner font-mono text-sm">
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm, remarkMath]}
+                                        rehypePlugins={[rehypeKatex]}
+                                        components={{
+                                            p: ({ children }) => <p className="mb-4">{children}</p>,
+                                            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
+                                            h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
+                                            li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
+                                            code({ node, inline, className, children, ...props }) {
+                                                return inline ? (
+                                                    <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm">{children}</code>
+                                                ) : (
+                                                    <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">
+                                                        <code className="text-white text-sm">{children}</code>
+                                                    </pre>
+                                                );
+                                            }
+                                        }}
+                                    >
+                                        {aiReview}
+                                    </ReactMarkdown>
+                                </div>
+                            )}
+
+                            {selectedAIOption === "hint" && aiHints && (
+                                <div className="bg-purple-50 p-3 mt-4 rounded font-mono text-sm">
+                                    <h4 className="font-bold mb-2">AI Hints:</h4>
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm, remarkMath]}
+                                        rehypePlugins={[rehypeKatex]}
+                                        components={{
+                                            p: ({ children }) => <p className="mb-4">{children}</p>,
+                                            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
+                                            h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
+                                            li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
+                                            code({ node, inline, className, children, ...props }) {
+                                                return inline ? (
+                                                    <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm">{children}</code>
+                                                ) : (
+                                                    <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">
+                                                        <code className="text-white text-sm">{children}</code>
+                                                    </pre>
+                                                );
+                                            }
+                                        }}
+                                    >{aiHints}</ReactMarkdown>
+                                </div>
+                            )}
+
+                            {selectedAIOption === "code" && aiGeneratedCode && (
+                                <div className="bg-orange-50 p-3 mt-4 rounded font-mono text-sm">
+                                    <h4 className="font-bold mb-2">Generated Code:</h4>
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm, remarkMath]}
+                                        rehypePlugins={[rehypeKatex]}
+                                        components={{
+                                            p: ({ children }) => <p className="mb-4">{children}</p>,
+                                            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
+                                            h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
+                                            li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
+                                            code({ node, inline, className, children, ...props }) {
+                                                return inline ? (
+                                                    <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm">{children}</code>
+                                                ) : (
+                                                    <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">
+                                                        <code className="text-white text-sm">{children}</code>
+                                                    </pre>
+                                                );
+                                            }
+                                        }}
+                                    >{aiGeneratedCode}</ReactMarkdown>
+                                </div>
+                            )}
                         </div>
-                    }
+                    )}
+
 
                 </form>
             </div>

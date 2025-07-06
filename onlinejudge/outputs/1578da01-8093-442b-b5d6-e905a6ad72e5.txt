@@ -1,4 +1,0 @@
-  File "/Users/gauravnayak/Desktop/AlgouniversityDevSeason/Project/AlgoDevSeason/onlinejudge/codes/1578da01-8093-442b-b5d6-e905a6ad72e5.python", line 5
-    print(a+b)
-    ^
-IndentationError: expected an indented block after 'while' statement on line 4

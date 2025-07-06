@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/gauravnayak/Desktop/AlgouniversityDevSeason/Project/AlgoDevSeason/onlinejudge/codes/1635ea84-7ceb-4861-be9b-3725a80b4ee3.python", line 4, in <module>
-    while(True):
-KeyboardInterrupt

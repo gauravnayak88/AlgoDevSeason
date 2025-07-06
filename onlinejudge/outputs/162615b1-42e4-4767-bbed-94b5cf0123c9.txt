@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/gauravnayak/Desktop/AlgouniversityDevSeason/Project/AlgoDevSeason/onlinejudge/codes/162615b1-42e4-4767-bbed-94b5cf0123c9.python", line 1, in <module>
-    a=int(input(end=""))
-TypeError: input() takes no keyword arguments

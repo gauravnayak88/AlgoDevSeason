@@ -2,8 +2,10 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from django.contrib import messages
-from .models import Profile, Problem, Topic, ProblemForm, TestCase, TestCaseForm, Solution, Discussion, Comment, SolutionForm, RegisterForm
+from .models import Profile, Problem, Topic, Contest, ProblemForm, TestCase, TestCaseForm, Solution, Discussion, Comment, SolutionForm, RegisterForm
 from django.db.models import Q, F, Count
 from django.http import HttpResponseForbidden, JsonResponse
 from django.core.files.storage import default_storage
@@ -16,16 +18,19 @@ import signal
 from dotenv import load_dotenv
 import httpx
 
+# prompt = f"Review this {language} code:\n\n{code}\n\nBriefly comment on its quality, improvements, and logic."
+
 load_dotenv()  # Load variables from .env file
 api_key = os.environ.get("API_KEY")
 
 #DRF
 from rest_framework import viewsets, permissions, status
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import ProfileSerializer, ProblemSerializer, TopicSerializer, TestCaseSerializer, SolutionSerializer, DiscussionSerializer, CommentSerializer, EmailOrUsernameLoginSerializer
+from .serializers import ProfileSerializer, ProblemSerializer, ContestSerializer, TopicSerializer, TestCaseSerializer, SolutionSerializer, DiscussionSerializer, CommentSerializer, EmailOrUsernameLoginSerializer
 from .permissions import IsStaffUser, IsOwnerOrReadOnly
 
 
@@ -66,10 +71,61 @@ class ProblemViewSet(viewsets.ModelViewSet):
 
         return Response(self.get_serializer(problem).data, status=status.HTTP_201_CREATED)
 
-def get_ai_feedback(code, language):
+@api_view(['POST'])
+def ai_hint_api(request):
+    problem = request.data.get("problem", "")
+    code = request.data.get("code", "")
+    language = request.data.get("language", "")
+
+    prompt = f"""You're an expert problem-solving assistant.
+The user is working on this problem (in {language}):
+
+{problem}
+
+Here is the current solution attempt:
+
+{code}
+
+Suggest up to 3 useful hints to help the user debug, improve, or proceed with the solution.
+Avoid directly giving away the answer.
+"""
+
+    hint = query_openrouter(prompt)
+    print(hint)
+    return Response({"hint": hint})
+
+@api_view(['POST'])
+def ai_generate_code_api(request):
+    problem = request.data.get("problem", "")
+    language = request.data.get("language", "")
+
+    prompt = f"""You're an experienced competitive programmer.
+Write a clean and optimal solution to the following problem in {language}.
+
+Problem:
+{problem}
+
+Use clear code, helpful comments, and avoid unnecessary input/output wrapping unless required.
+"""
+
+    code = query_openrouter(prompt)
+    print(code)
+    return Response({"code": code})
+
+@api_view(['POST'])
+def ai_review_api(request):
+    code = request.data.get("code")
+    language = request.data.get("language")
+
     prompt = f"Review this {language} code:\n\n{code}\n\nBriefly comment on its quality, improvements, and logic."
 
-    # print(f"Code: {code}, Language: {language}")
+    review = query_openrouter(prompt)
+    print(review)
+    return Response({"review": review})
+
+
+# Helper used in all three
+def query_openrouter(prompt):
     try:
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -79,16 +135,107 @@ def get_ai_feedback(code, language):
             "https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
             json={
-                "model": "mistralai/mistral-7b-instruct",  # or any other free model
+                "model": "google/gemini-2.5-flash-lite-preview-06-17",
                 "messages": [
-                    {"role": "system", "content": "You are a helpful code reviewer."},
+                    {"role": "system", "content": "You are a helpful programming assistant."},
                     {"role": "user", "content": prompt}
                 ]
             }
         )
+        
         return response.json()["choices"][0]["message"]["content"]
     except Exception as e:
-        return f"AI feedback unavailable. Error: {str(e)}"
+        return f"AI response unavailable. Error: {str(e)}"
+    
+# def query_gemini(prompt):
+#     try:
+#         headers = {
+#             "Content-Type": "application/json",
+#         }
+
+#         payload = {
+#             "contents": [
+#                 {
+#                     "parts": [
+#                         {"text": prompt}
+#                     ]
+#                 }
+#             ]
+#         }
+
+#         response = httpx.post(
+#             f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={API_KEY}",
+#             headers=headers,
+#             json=payload
+#         )
+
+#         data = response.json()
+
+#         return data["candidates"][0]["content"]["parts"][0]["text"]
+
+#     except Exception as e:
+#         return f"AI response unavailable. Error: {str(e)}"
+
+
+@method_decorator(never_cache, name='dispatch')
+class ContestViewSet(viewsets.ModelViewSet):
+    queryset = Contest.objects.all()
+    serializer_class = ContestSerializer
+    permission_classes = []
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsStaffUser()]  # only staff
+        return [IsAuthenticated()]
+    
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def join(self, request, pk=None):
+        contest = self.get_object()
+        contest.joined_users.add(request.user)
+        return Response({"joined": True})
+    
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    def joined(self, request):
+        contests = Contest.objects.filter(joined_users=request.user)
+        serializer = self.get_serializer(contests, many=True)
+        return Response(serializer.data)
+
+class ContestLeaderboardAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        contest = Contest.objects.get(pk=pk)
+        users_scores = {}
+
+        solutions = Solution.objects.filter(problem__contest=contest, verdict='Accepted')
+
+        for sol in solutions:
+            user = sol.written_by
+            users_scores.setdefault(user, {"score": 0, "solved": set(), "last_time": sol.submitted_at})
+            if sol.problem_id not in users_scores[user]["solved"]:
+                users_scores[user]["score"] += 100  # or 1 or whatever your logic
+                users_scores[user]["solved"].add(sol.problem_id)
+                if sol.submitted_at_at > users_scores[user]["last_time"]:
+                    users_scores[user]["last_time"] = sol.created_at
+
+        leaderboard = sorted([
+            {
+                "user": user.username,
+                "score": data["score"],
+                "solved_problems": list(data["solved"]),
+                "last_submission_time": data["last_time"]
+            } for user, data in users_scores.items()
+        ], key=lambda x: (-x["score"], x["last_submission_time"]))
+
+        return Response(leaderboard)
 
 class SolutionViewSet(viewsets.ModelViewSet):
     queryset = Solution.objects.all()
@@ -358,12 +505,12 @@ def run_code(language, code, input_data, time_limit, memory_limit=128*1024*1024)
     return output_data
 
 class TestCaseViewSet(viewsets.ModelViewSet):
-    queryset = Solution.objects.all()
+    queryset = TestCase.objects.all()
     serializer_class = TestCaseSerializer
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(written_by=self.request.user)
+        serializer.save()
 
 
 class DiscussionViewSet(viewsets.ModelViewSet):
@@ -421,8 +568,8 @@ def problem_list_api(request):
 
 @api_view(['GET'])
 def topicwise_problem_list_api(request, pk):
-    topic = Topic.objects.get(pk=pk)
-    problems = Problem.objects.filter(topic=topic)
+    topics = Topic.objects.get(pk=pk)
+    problems = Problem.objects.filter(topics=topics)
     serializer = ProblemSerializer(problems, many=True, context={'request': request})
     return Response(serializer.data)
 
@@ -487,31 +634,18 @@ def leaderboard(request):
 @api_view(['POST'])
 # @permission_classes([IsAuthenticated])  # Optional: only if login is required to run
 def run_code_api(request):
-    problem = request.data.get("problem")
     language = request.data.get("language")
     code = request.data.get("code")
     input_data = request.data.get("input_data", "")
-    print(problem)
 
     if not all([language, code]):
         return Response({"error": "Language and code are required."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        output = run_code(language, code, input_data, time_limit=problem['time_limit'])
+        output = run_code(language, code, input_data, time_limit=2)
         return Response({"output": output})
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-@api_view(['POST'])
-def ai_review_api(request):
-    code = request.data.get("code")
-    language = request.data.get("language")
-
-    review = get_ai_feedback(code, language)
-
-    return Response({"review": review})
-
-
 
 #Another DRF-React view
 @api_view(['GET'])

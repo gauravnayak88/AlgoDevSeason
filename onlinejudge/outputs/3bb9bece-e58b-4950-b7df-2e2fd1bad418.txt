@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/gauravnayak/Desktop/AlgouniversityDevSeason/Project/AlgoDevSeason/onlinejudge/codes/3bb9bece-e58b-4950-b7df-2e2fd1bad418.python", line 1, in <module>
-    a=int(input(), end="")
-TypeError: 'end' is an invalid keyword argument for int()

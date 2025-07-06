@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
-{% block content %}
-    <h1>Welcome to Online Judge</h1>
-    <p>Gauge your skills and readiness using the ultimate judge</p>
-    {% if not user.is_authenticated %}
-    <a href="{% url "register-user" %}"><button>Create Account</button></a></p>
-    {% endif %}
-{% endblock %}

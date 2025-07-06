@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/gauravnayak/Desktop/AlgouniversityDevSeason/Project/AlgoDevSeason/onlinejudge/codes/bfe1c5c4-1491-4224-b83b-f0a649b3152b.python", line 1, in <module>
-    a=int(input(a))
-NameError: name 'a' is not defined
