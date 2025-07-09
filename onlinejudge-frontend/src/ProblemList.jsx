@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import API from './api';
 
-// Optional: Difficulty icon component
+// Difficulty icon component
 const DifficultyIcon = ({ difficulty }) => {
     if (difficulty === "easy") return (
         <svg className="w-4 h-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">

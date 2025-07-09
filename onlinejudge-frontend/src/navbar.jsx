@@ -96,7 +96,7 @@ function Navbar({ profile, isAuthenticated, setIsAuthenticated }) {
                             <div className="block py-2 px-2 hover:bg-gray-700 rounded">Leaderboard</div>
                         </Link>
                     )}
-                    <Link to="/challenges" onClick={handleLinkClick}>
+                    <Link to="/contests" onClick={handleLinkClick}>
                         <div className="block py-2 px-2 hover:bg-gray-700 rounded">Contests</div>
                     </Link>
                     <Link to="/discuss" onClick={handleLinkClick}>

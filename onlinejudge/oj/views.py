@@ -77,17 +77,17 @@ def ai_hint_api(request):
     language = request.data.get("language", "")
 
     prompt = f"""You're an expert problem-solving assistant.
-The user is working on this problem (in {language}):
+    The user is working on this problem (in {language}):
 
-{problem}
+    {problem}
 
-Here is the current solution attempt:
+    Here is the current solution attempt:
 
-{code}
+    {code}
 
-Suggest up to 3 useful hints to help the user debug, improve, or proceed with the solution.
-Avoid directly giving away the answer.
-"""
+    Suggest up to 3 useful hints to help the user debug, improve, or proceed with the solution.
+    Avoid directly giving away the answer.
+    """
 
     hint = query_openrouter(prompt)
     print(hint)

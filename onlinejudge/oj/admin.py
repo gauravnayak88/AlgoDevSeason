@@ -7,7 +7,7 @@ class ProfileAdmin(admin.ModelAdmin): # allow admin to assign staff/student role
     list_display = ('user', 'role')
     
 class ProblemAdmin(admin.ModelAdmin):
-    filter_horizontal = ('topics',)  # Optional, makes topic selection easier
+    filter_horizontal = ('topics',)  # makes topic selection easier
     list_display = ('name', 'difficulty', 'written_by')
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "written_by":

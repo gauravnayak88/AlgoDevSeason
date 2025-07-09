@@ -26,7 +26,6 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
         return user
     
     def to_representation(self, instance):
-        # Avoid trying to return `role`, which is not part of User
         return {
             "id": instance.id,
             "username": instance.username,
