@@ -40,21 +40,33 @@ function Navbar({ profile, isAuthenticated, setIsAuthenticated }) {
                 </div>
 
                 {/* Desktop Auth - right aligned */}
-                <div className="hidden lg:flex items-center gap-3 z-20">
+                <div className="hidden lg:flex items-center gap-2 z-20">
                     {isAuthenticated && profile ? (
                         <>
-                            <Link to="/profile"><button className="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800"><User size={20} className="text-white" /></button></Link>
+                            <Link to="/profile">
+                                <button className="p-2 bg-blue-700 rounded hover:bg-blue-800 h-10 w-10 flex items-center justify-center">
+                                    <User size={20} className="text-white" />
+                                </button>
+                            </Link>
                             <button
                                 onClick={handleLogout}
-                                className="px-3 py-2 bg-red-600 rounded hover:bg-red-700"
+                                className="px-3 py-1.5 text-sm bg-red-600 rounded hover:bg-red-700 h-10"
                             >
                                 Logout
                             </button>
                         </>
                     ) : (
                         <>
-                            <Link to="/login"><button className="px-3 py-2 bg-green-600 rounded hover:bg-green-700">Login</button></Link>
-                            <Link to="/register"><button className="px-3 py-2 bg-blue-600 rounded hover:bg-blue-700">Register</button></Link>
+                            <Link to="/login">
+                                <button className="px-3 py-1.5 text-sm bg-green-600 rounded hover:bg-green-700 h-10">
+                                    Login
+                                </button>
+                            </Link>
+                            <Link to="/register">
+                                <button className="px-3 py-1.5 text-sm bg-blue-600 rounded hover:bg-blue-700 h-10">
+                                    Register
+                                </button>
+                            </Link>
                         </>
                     )}
                 </div>

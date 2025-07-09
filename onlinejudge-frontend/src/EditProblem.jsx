@@ -15,6 +15,7 @@ function EditProblem() {
     constraints: "",
     time_limit: "",
     memory_limit: "",
+    is_hidden: false,
   });
 
   useEffect(() => {
@@ -23,8 +24,10 @@ function EditProblem() {
       .catch((err) => console.log(err));
   }, [id]);
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -67,13 +70,13 @@ function EditProblem() {
         </div>
 
         <div>
-        <label className="block text-sm font-medium text-gray-600 mt-4">Constraints (Markdown supported)</label>
-        <textarea
-          value={form.constraints}
-          onChange={handleChange}
-          rows={4}
-          className="w-full border rounded px-3 py-2 font-mono text-sm focus:ring focus:ring-blue-200"
-        />
+          <label className="block text-sm font-medium text-gray-600 mt-4">Constraints (Markdown supported)</label>
+          <textarea
+            value={form.constraints}
+            onChange={handleChange}
+            rows={4}
+            className="w-full border rounded px-3 py-2 font-mono text-sm focus:ring focus:ring-blue-200"
+          />
         </div>
 
         <div>
@@ -119,6 +122,20 @@ function EditProblem() {
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2"
             />
           </div>
+        </div>
+
+        <div>
+          <label htmlFor="is_hidden" className="inline-flex items-center">
+            <input
+              type="checkbox"
+              id="is_hidden"
+              name="is_hidden"
+              checked={form.is_hidden}
+              onChange={handleChange}
+              className="mr-2"
+            />
+            <span className="text-sm text-gray-700">Hidden (not visible to users)</span>
+          </label>
         </div>
 
         <fieldset className="border p-4 rounded mb-4">

@@ -6,8 +6,9 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.contrib import messages
 from .models import Profile, Problem, Topic, Contest, ProblemForm, TestCase, TestCaseForm, Solution, Discussion, Comment, SolutionForm, RegisterForm
-from django.db.models import Q, F, Count
+from django.db.models import Q, F, Count, Sum, Case, When, IntegerField
 from django.http import HttpResponseForbidden, JsonResponse
+from collections import defaultdict
 from django.core.files.storage import default_storage
 from django.conf import settings
 import uuid
@@ -17,8 +18,6 @@ import os
 import signal
 from dotenv import load_dotenv
 import httpx
-
-# prompt = f"Review this {language} code:\n\n{code}\n\nBriefly comment on its quality, improvements, and logic."
 
 load_dotenv()  # Load variables from .env file
 api_key = os.environ.get("API_KEY")
@@ -215,16 +214,30 @@ class ContestLeaderboardAPIView(APIView):
         contest = Contest.objects.get(pk=pk)
         users_scores = {}
 
-        solutions = Solution.objects.filter(problem__contest=contest, verdict='Accepted')
+        solutions = Solution.objects.filter(problem__contest=contest, verdict='Accepted').select_related('problem', 'written_by')
 
         for sol in solutions:
             user = sol.written_by
+            problem = sol.problem
+            difficulty = problem.difficulty
+
+            # Assign score based on difficulty
+            if difficulty == "easy":
+                score = 50
+            elif difficulty == "medium":
+                score = 100
+            elif difficulty == "hard":
+                score = 150
+            else:
+                score = 0
+
             users_scores.setdefault(user, {"score": 0, "solved": set(), "last_time": sol.submitted_at})
-            if sol.problem_id not in users_scores[user]["solved"]:
-                users_scores[user]["score"] += 100  # or 1 or whatever your logic
-                users_scores[user]["solved"].add(sol.problem_id)
-                if sol.submitted_at_at > users_scores[user]["last_time"]:
-                    users_scores[user]["last_time"] = sol.created_at
+
+            if problem.id not in users_scores[user]["solved"]:
+                users_scores[user]["score"] += score
+                users_scores[user]["solved"].add(problem.id)
+                if sol.submitted_at > users_scores[user]["last_time"]:
+                    users_scores[user]["last_time"] = sol.submitted_at
 
         leaderboard = sorted([
             {
@@ -236,6 +249,7 @@ class ContestLeaderboardAPIView(APIView):
         ], key=lambda x: (-x["score"], x["last_submission_time"]))
 
         return Response(leaderboard)
+
 
 class SolutionViewSet(viewsets.ModelViewSet):
     queryset = Solution.objects.all()
@@ -259,6 +273,7 @@ class SolutionViewSet(viewsets.ModelViewSet):
         results = []
         passed_count = 0
         tle_count = 0
+        mle_count = 0
         compilation_error_count = 0
         runtime_error_count = 0
 
@@ -271,9 +286,13 @@ class SolutionViewSet(viewsets.ModelViewSet):
                     expected_output = f.read()
             except Exception as e:
                 return Response({"error": f"Error reading test case files: {str(e)}"}, status=500)
-            output = run_code(language, code, input_text, problem.time_limit)
+            output = run_code(language, code, input_text, problem.time_limit, problem.memory_limit)
+            print("VERDICT CHECK OUTPUT:", repr(output))
             actual = output.strip()
             expected = expected_output.strip()
+
+            print(output)
+            
 
             if actual == expected:
                 verdict = "Passed"
@@ -282,7 +301,10 @@ class SolutionViewSet(viewsets.ModelViewSet):
                 verdict = "Compilation Error"
                 compilation_error_count += 1
                 break
-            elif "Runtime Error" in output:
+            elif "Memory Limit Exceeded" in output:
+                verdict = "Memory Limit Exceeded"
+                mle_count += 1
+            elif "Runtime Error" in output or "Segmentation Fault" in output:
                 verdict = "Runtime Error"
                 runtime_error_count += 1
             elif output == "Time Limit Exceeded":
@@ -304,6 +326,8 @@ class SolutionViewSet(viewsets.ModelViewSet):
             final_verdict = "Compilation Error"
         elif runtime_error_count>0:
             final_verdict = "Runtime Error"
+        elif mle_count>0:
+            final_verdict = "Memory Limit Exceeded"
         elif tle_count>0:
             final_verdict = "Time Limit Exceeded"
         else:
@@ -329,8 +353,9 @@ class SolutionViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
 
 
-def run_code(language, code, input_data, time_limit, memory_limit=128*1024*1024):
-    print(time_limit)
+def run_code(language, code, input_data, time_limit, memory_limit):
+    print(f"[DEBUG] language={language}, time_limit={time_limit}, memory_limit={memory_limit}")
+    # print(time_limit)
     time_limit = float(time_limit)
     memory_limit = int(memory_limit)
     project_path = Path(settings.BASE_DIR)
@@ -365,10 +390,19 @@ def run_code(language, code, input_data, time_limit, memory_limit=128*1024*1024)
         # output_file.write("10")
         pass  # This will create an empty file
 
-    def set_limits():
-        import resource
-        resource.setrlimit(resource.RLIMIT_AS, (memory_limit, resource.RLIM_INFINITY))  # Memory
-        resource.setrlimit(resource.RLIMIT_CPU, (time_limit, time_limit))  # CPU Time
+    def get_limit_function(memory_limit, time_limit):
+        safe_limit = max(memory_limit, 128 * 1024 * 1024)
+        def set_limits():
+            import resource
+            try:
+                if memory_limit > 0:
+                    resource.setrlimit(resource.RLIMIT_AS, (safe_limit, safe_limit))
+                if time_limit > 0:
+                    resource.setrlimit(resource.RLIMIT_CPU, (int(time_limit), int(time_limit)))
+            except Exception as e:
+                print("set_limits error:", e)
+                raise
+        return set_limits
 
 
     if language == "cpp":
@@ -389,10 +423,21 @@ def run_code(language, code, input_data, time_limit, memory_limit=128*1024*1024)
                             stdout=output_file,
                             stderr=subprocess.PIPE,
                             text=True,               # Capture error
-                            timeout=time_limit,             
+                            timeout=time_limit, 
+                            preexec_fn=get_limit_function(memory_limit, time_limit)            
                         )
                         if result.returncode != 0:
-                            return "Runtime Error!!!\n" + result.stderr.strip()
+                            signal_num = -result.returncode
+                            signal_name = signal.Signals(signal_num).name
+                            if signal_name == "SIGKILL":
+                                return "Memory Limit Exceeded"
+                            elif signal_name in ["SIGSEGV", "SIGABRT", "SIGBUS"]:
+                                if "bad_alloc" in result.stderr or "std::bad_alloc" in result.stderr:
+                                    return "Memory Limit Exceeded"
+                                elif signal_name == 'SIGSEGV':
+                                    return "Segmentation Fault"
+                                else:
+                                    return "Runtime Error!!!\n" + result.stderr.strip()
                     except subprocess.TimeoutExpired:
                         return "Time Limit Exceeded"
         else:
@@ -416,10 +461,21 @@ def run_code(language, code, input_data, time_limit, memory_limit=128*1024*1024)
                             stdout=output_file,
                             stderr=subprocess.PIPE,
                             text=True,               # Capture error
-                            timeout=time_limit,             
+                            timeout=time_limit, 
+                            preexec_fn=get_limit_function(memory_limit, time_limit)            
                         )
                         if result.returncode != 0:
-                            return "Runtime Error!!!\n" + result.stderr.strip()
+                            signal_num = -result.returncode
+                            signal_name = signal.Signals(signal_num).name
+                            if signal_name == "SIGKILL":
+                                return "Memory Limit Exceeded"
+                            elif signal_name in ["SIGSEGV", "SIGABRT", "SIGBUS"]:
+                                if "bad_alloc" in result.stderr or "std::bad_alloc" in result.stderr:
+                                    return "Memory Limit Exceeded"
+                                elif signal_name == 'SIGSEGV':
+                                    return "Segmentation Fault"
+                                else:
+                                    return "Runtime Error!!!\n" + result.stderr.strip()
                     except subprocess.TimeoutExpired:
                         return "Time Limit Exceeded"
         else:
@@ -437,20 +493,28 @@ def run_code(language, code, input_data, time_limit, memory_limit=128*1024*1024)
                         stderr=subprocess.PIPE,
                         text=True,
                         timeout=time_limit,
-                        start_new_session=True  # Start new process group
+                        preexec_fn=get_limit_function(memory_limit, time_limit)   # Enforce limits
                     )
                     if result.returncode != 0:
-                        return "Runtime Error!!!\n" + result.stderr.strip()
-                except subprocess.TimeoutExpired as e:
-                    # Kill the entire process group
-                    try:
-                        os.killpg(e.pid, signal.SIGKILL)
-                    except Exception:
-                        pass
+                        signal_num = -result.returncode
+                        if signal_num > 0:
+                            signal_name = signal.Signals(signal_num).name
+                            if signal_name == "SIGXCPU":
+                                return "Time Limit Exceeded"
+                            elif signal_name == "SIGKILL":
+                                # Try to infer cause from stderr
+                                if "MemoryError" in result.stderr:
+                                    return "Memory Limit Exceeded"
+                                elif "RecursionError" in result.stderr:
+                                    return "Memory Limit Exceeded"
+                                else:
+                                    return "Time Limit Exceeded"  # Assume TLE unless evidence of MLE
+                            else:
+                                return f"Runtime Error!!!\nKilled by signal: {signal_name}"
+
+                except subprocess.TimeoutExpired:
                     return "Time Limit Exceeded"
 
-                
-    # Write solution as public class Main { public static void main () { ... }}
     elif language == "java":
         import re
 
@@ -482,16 +546,23 @@ def run_code(language, code, input_data, time_limit, memory_limit=128*1024*1024)
             with open(input_file_path, "r") as input_file:
                 with open(output_file_path, "w") as output_file:
                     try:
+                        # Use /usr/bin/time to capture memory usage (optional)
                         result = subprocess.run(
-                            ["java", "-cp", str(codes_dir), class_name],
+                            ["java", "-Xmx256m", "-cp", str(codes_dir), class_name],
                             stdin=input_file,
                             stdout=output_file,
                             stderr=subprocess.PIPE,
-                            text=True,               # Capture error
-                            timeout=time_limit,             
+                            text=True,
+                            timeout=time_limit,
                         )
+
                         if result.returncode != 0:
-                            return "Runtime Error!!!\n" + result.stderr.strip()
+                            # Handle Java out-of-memory
+                            if "java.lang.OutOfMemoryError" in result.stderr:
+                                return "Memory Limit Exceeded"
+                            else:
+                                return "Runtime Error!!!\n" + result.stderr.strip()
+
                     except subprocess.TimeoutExpired:
                         return "Time Limit Exceeded"
         else:
@@ -562,14 +633,15 @@ def user_profile(request):
 #DRF-React view
 @api_view(['GET'])
 def problem_list_api(request):
-    problems = Problem.objects.all()
+    print("=== problem_list_api HIT ===")
+    problems = Problem.objects.filter(is_hidden=False)
     serializer = ProblemSerializer(problems, many=True, context={'request': request})
     return Response(serializer.data)
 
 @api_view(['GET'])
 def topicwise_problem_list_api(request, pk):
     topics = Topic.objects.get(pk=pk)
-    problems = Problem.objects.filter(topics=topics)
+    problems = Problem.objects.filter(topics=topics, is_hidden=False)
     serializer = ProblemSerializer(problems, many=True, context={'request': request})
     return Response(serializer.data)
 
@@ -621,14 +693,38 @@ def topic_list_api(request):
 
 @api_view(['GET'])
 def leaderboard(request):
-    data = (
-    Solution.objects
-    .filter(verdict="Accepted")
-    .values(username=F("written_by__username"))  # alias it to `username`
-    .annotate(solved_count=Count("problem", distinct=True))
-    .order_by("-solved_count")
+    accepted = (
+        Solution.objects
+        .filter(verdict="Accepted")
+        .select_related("written_by", "problem")
     )
-    return Response(data)
+
+    # (username, problem_id) → ensure uniqueness
+    user_problem_set = set()
+    user_stats = defaultdict(lambda: {"solved_count": 0, "score": 0})
+
+    for sol in accepted:
+        key = (sol.written_by.username, sol.problem.id)
+        if key not in user_problem_set:
+            user_problem_set.add(key)
+            difficulty = sol.problem.difficulty
+            if difficulty == "easy":
+                user_stats[sol.written_by.username]["score"] += 50
+            elif difficulty == "medium":
+                user_stats[sol.written_by.username]["score"] += 100
+            elif difficulty == "hard":
+                user_stats[sol.written_by.username]["score"] += 150
+            user_stats[sol.written_by.username]["solved_count"] += 1
+
+    # Convert to list and sort by score descending
+    leaderboard = [
+        {"username": username, **stats}
+        for username, stats in user_stats.items()
+    ]
+    leaderboard.sort(key=lambda x: x["score"], reverse=True)
+
+    return Response(leaderboard)
+
 
 
 @api_view(['POST'])
@@ -642,7 +738,8 @@ def run_code_api(request):
         return Response({"error": "Language and code are required."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        output = run_code(language, code, input_data, time_limit=2)
+        output = run_code(language, code, input_data, time_limit=2, memory_limit=128*1024*1024)
+        print(output)
         return Response({"output": output})
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

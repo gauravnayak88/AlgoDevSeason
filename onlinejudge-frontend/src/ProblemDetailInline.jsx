@@ -12,7 +12,7 @@ const boilerplate = {
     c: `#include <stdio.h>\n\nint main() {\n  // Your code here\n  return 0;\n}`
 };
 
-export default function ProblemDetailInline({ profile, problem, onAccepted, isSolved }) {
+export default function ProblemDetailInline({ profile, problem, isSolved, isEnded }) {
     const [language, setLanguage] = useState("cpp");
     const [code, setCode] = useState("");
     const [input, setInput] = useState("");
@@ -23,13 +23,15 @@ export default function ProblemDetailInline({ profile, problem, onAccepted, isSo
     useEffect(() => {
         if (!problem) return;
 
-        const savedLang = localStorage.getItem(`lang-${profile.username}-${problem.id}`) || "cpp";
-        setLanguage(savedLang);
-        const savedCode = localStorage.getItem(`code-${profile.username}-${problem.id}-${savedLang}`);
-        if (savedCode !== null) {
-            setCode(savedCode);
-        } else {
-            setCode(boilerplate[savedLang]);
+        if (profile) {
+            const savedLang = localStorage.getItem(`lang-${profile.username}-${problem.id}`) || "cpp";
+            setLanguage(savedLang);
+            const savedCode = localStorage.getItem(`code-${profile.username}-${problem.id}-${savedLang}`);
+            if (savedCode !== null) {
+                setCode(savedCode);
+            } else {
+                setCode(boilerplate[savedLang]);
+            }
         }
     }, [problem]);
 
@@ -182,13 +184,15 @@ export default function ProblemDetailInline({ profile, problem, onAccepted, isSo
                 >
                     Run
                 </button>
-                <button
-                    onClick={handleSubmit}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                    disabled={isProcessing}
-                >
-                    Submit
-                </button>
+                {!isEnded &&
+                    <button
+                        onClick={handleSubmit}
+                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                        disabled={isProcessing}
+                    >
+                        Submit
+                    </button>
+                }
             </div>
         </div>
     );

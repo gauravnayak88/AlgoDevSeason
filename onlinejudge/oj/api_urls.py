@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ProblemViewSet, SolutionViewSet, ContestViewSet, DiscussionViewSet, CommentViewSet, TestCaseViewSet
+from .views import ProblemViewSet, SolutionViewSet, ContestViewSet, DiscussionViewSet, CommentViewSet, TestCaseViewSet, problem_list_api
 
 router = DefaultRouter()
 router.register('problems', ProblemViewSet, basename='problem')

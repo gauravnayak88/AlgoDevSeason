@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
     # DRF-React URL'S
-    path('api/problems/', views.problem_list_api, name='problem-list-api'),
+    path('api/problems/practice', views.problem_list_api, name='problem-list-api'),
     path('api/problems/<int:pk>', views.problem_detail_api, name='api-problem-detail'),
     path('api/problems/<int:pk>/testcases', views.testcase_list_api, name='testcase-list-api'),
     path('api/problems/<int:pk>/solutions', views.solution_list_api, name='solution-list-api'),

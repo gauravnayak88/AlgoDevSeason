@@ -166,6 +166,7 @@ function ContestDetails() {
                         profile={profile}
                         problem={selectedProblem}
                         isSolved={solvedProblems?.some(sp => sp.id === selectedProblem?.id)}
+                        isEnded={contest?.is_ended}
                     />
                 ) : (
                     <p className="text-gray-500">Select a problem to view details.</p>

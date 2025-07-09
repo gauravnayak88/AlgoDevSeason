@@ -35,6 +35,7 @@ class Problem(models.Model):
     difficulty = models.CharField(choices=DIFFICULTY, max_length=10)
     time_limit = models.DecimalField(max_digits=6, decimal_places=2)
     memory_limit = models.DecimalField(max_digits=6, decimal_places=2)
+    is_hidden = models.BooleanField(default=False)
     date_added = models.DateField(auto_now_add=True)
     topics = models.ManyToManyField(Topic)
 

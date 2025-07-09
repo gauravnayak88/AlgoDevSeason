@@ -1,44 +1,3 @@
-// import React, { useEffect, useState } from 'react';
-// import API from './api';
-
-// function Leaderboard() {
-//     const [leaderboard, setLeaderboard] = useState([]);
-
-//     useEffect(() => {
-//         API.get('/api/leaderboard/')
-//             .then(res => setLeaderboard(res.data))
-//             .catch(err => console.error(err));
-//     }, []);
-
-//     return (
-//         <div className="max-w-4xl mx-auto p-6">
-//             <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">🏆 Leaderboard</h2>
-//             <div className="overflow-x-auto">
-//                 <table className="min-w-full bg-white rounded-xl shadow overflow-hidden">
-//                     <thead className="bg-gray-200 text-gray-700 text-left">
-//                         <tr>
-//                             <th className="py-3 px-4">Rank</th>
-//                             <th className="py-3 px-4">Username</th>
-//                             <th className="py-3 px-4">Problems Solved</th>
-//                         </tr>
-//                     </thead>
-//                     <tbody className="text-gray-700">
-//                         {leaderboard.map((user, index) => (
-//                             <tr key={user.written_by || user.username} className="border-t">
-//                                 <td className="py-3 px-4">{index + 1}</td>
-//                                 <td className="py-3 px-4 font-medium">{user.written_by || user.username}</td>
-//                                 <td className="py-3 px-4">{user.solved_count}</td>
-//                             </tr>
-//                         ))}
-//                     </tbody>
-//                 </table>
-//             </div>
-//         </div>
-//     );
-// }
-
-// export default Leaderboard;
-
 import React, { useEffect, useState } from 'react';
 import API from './api';
 
@@ -53,6 +12,14 @@ const rankIcon = (rank) => {
 function Leaderboard() {
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        // Fetch current user's profile
+        API.get('/api/profile/')  // ← or your user info endpoint
+            .then(res => setCurrentUser(res.data.username))
+            .catch(err => console.error(err));
+    }, []);
 
     useEffect(() => {
         API.get('/api/leaderboard/')
@@ -81,28 +48,37 @@ function Leaderboard() {
                                 <th className="py-3 px-4">Rank</th>
                                 <th className="py-3 px-4">Username</th>
                                 <th className="py-3 px-4">Problems Solved</th>
+                                <th className="py-3 px-4">Score</th>
                             </tr>
                         </thead>
                         <tbody className="text-gray-700">
-                            {leaderboard.map((user, index) => (
-                                <tr
-                                    key={user.written_by || user.username}
-                                    className={`
-                                        border-t
-                                        ${index % 2 === 0 ? 'bg-blue-50/50' : 'bg-white'}
-                                        ${index < 3 ? 'font-bold text-blue-800' : ''}
-                                        hover:bg-blue-100/60 transition
-                                    `}
-                                >
-                                    <td className="py-3 px-4 flex items-center">
-                                        {rankIcon(index + 1)}
-                                        {index + 1}
-                                    </td>
-                                    <td className="py-3 px-4 font-medium">{user.written_by || user.username}</td>
-                                    <td className="py-3 px-4">{user.solved_count}</td>
-                                </tr>
-                            ))}
+                            {leaderboard.map((user, index) => {
+                                const username = user.written_by || user.username;
+                                const isCurrent = username === currentUser;
+
+                                return (
+                                    <tr
+                                        key={username}
+                                        className={`
+                    border-t
+                    ${index % 2 === 0 ? 'bg-blue-50/50' : 'bg-white'}
+                    ${index < 3 ? 'font-bold text-blue-800' : ''}
+                    ${isCurrent ? 'bg-yellow-100 font-semibold text-black' : ''}
+                    hover:bg-blue-100/60 transition
+                `}
+                                    >
+                                        <td className="py-3 px-4 flex items-center">
+                                            {rankIcon(index + 1)}
+                                            {index + 1}
+                                        </td>
+                                        <td className="py-3 px-4 font-medium">{username}</td>
+                                        <td className="py-3 px-4">{user.solved_count}</td>
+                                        <td className="py-3 px-4">{user.score}</td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
+
                     </table>
                 )}
             </div>

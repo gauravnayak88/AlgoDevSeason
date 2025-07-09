@@ -78,7 +78,7 @@ class ProblemSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Problem
-        fields = ['id', 'name', 'statement', 'difficulty', 'constraints', 'time_limit', 'memory_limit', 'written_by', 'sample_test_cases', 'non_sample_test_cases', 'topics']
+        fields = ['id', 'name', 'statement', 'difficulty', 'constraints', 'time_limit', 'memory_limit', 'written_by', 'sample_test_cases', 'non_sample_test_cases', 'is_hidden', 'topics']
         read_only_fields = ['written_by']
 
     def get_written_by(self, obj):

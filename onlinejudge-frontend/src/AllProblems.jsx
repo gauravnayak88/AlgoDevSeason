@@ -51,12 +51,6 @@ function ProblemList() {
 
     useEffect(() => {
         if (profile) {
-            if (profile.role === 'staff') {
-                API.get('api/problems/')
-                    .then(res => setProblems(res.data))
-                    .catch(err => console.log(err));
-            }
-
             API.get('/api/problems/solved')
                 .then(res => setSolvedProblems(res.data))
                 .catch(err => console.log(err));
@@ -85,14 +79,12 @@ function ProblemList() {
             <div className="flex flex-col md:flex-row md:items-end gap-4 mb-8">
                 <div className="flex-1">
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Problems</h2>
-                    <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
                     <input
-                        id="search"
                         type="text"
                         placeholder="🔍 Search by name or difficulty"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded-lg shadow-sm bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                        className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
                     />
                 </div>
                 <div className="w-full md:w-56">
@@ -101,7 +93,7 @@ function ProblemList() {
                         id="difficulty"
                         value={difficultyFilter}
                         onChange={(e) => setDifficultyFilter(e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded-lg shadow-sm bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                        className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
                     >
                         <option value="">All Difficulties</option>
                         <option value="easy">Easy</option>
@@ -110,7 +102,6 @@ function ProblemList() {
                     </select>
                 </div>
             </div>
-
 
             {/* Contribute Button */}
             {isAuthenticated && profile?.role === 'staff' && (

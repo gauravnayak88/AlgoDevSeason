@@ -13,6 +13,8 @@ function Profile() {
     const [problems, setProblems] = useState(null);
     const [solvedProblems, setSolvedProblems] = useState(null);
     const [submissions, setSubmissions] = useState([]);
+    const [rank, setRank] = useState(null);
+    const [score, setScore] = useState(null);
 
     useEffect(() => {
         API.get('/api/profile/')
@@ -40,6 +42,21 @@ function Profile() {
                     setSubmissions(userSubs);
                 })
                 .catch(err => console.log(err));
+        }
+    }, [profile]);
+
+    useEffect(() => {
+        if (profile) {
+            API.get('/api/leaderboard/')
+                .then(res => {
+                    const leaderboard = res.data;
+                    const index = leaderboard.findIndex(user => user.username === profile.username);
+                    if (index !== -1) {
+                        setRank(index + 1);
+                        setScore(leaderboard[index].score);
+                    }
+                })
+                .catch(err => console.error(err));
         }
     }, [profile]);
 
@@ -115,7 +132,14 @@ function Profile() {
                         <div className="text-gray-500 text-xs mt-1">Joined {new Date(profile.join_date).toLocaleDateString("en-IN", options)}</div>
                     </div>
                 </div>
+                {rank !== null && score !== null && (
+                    <div className="mt-2 text-sm text-blue-800 font-medium">
+                        🏆 Rank: <span className="font-semibold">{rank}</span> | 🎯 Score: <span className="font-semibold">{score}</span>
+                    </div>
+                )}
                 <p className="text-gray-600 mb-1"><span className="font-medium">Email:</span> {profile.email}</p>
+
+                <Link to={'/leaderboard'}><button>View Leaderboard</button></Link>
 
                 {/* Attempt/Solve Stats */}
                 <div className="mb-6 mt-4">

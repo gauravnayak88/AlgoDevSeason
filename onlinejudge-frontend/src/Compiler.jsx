@@ -21,10 +21,10 @@ function Compiler() {
     const [aiReview, setAiReview] = useState("");
 
     const boilerplate = {
-        cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    // Your code here\n    return 0;\n}`,
-        python: `# Your code here\ndef main():\n    pass\n\nif __name__ == "__main__":\n    main()`,
-        java: `public class Main {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}`,
-        c: `#include <stdio.h>\n\nint main() {\n    // Your code here\n    return 0;\n}`
+        cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n  // Your code here\n  return 0;\n}`,
+        python: `# Your code here\ndef main():\n  pass\n\nif __name__ == "__main__":\n  main()`,
+        java: `public class Main {\n  public static void main(String[] args) {\n    // Your code here\n  }\n}`,
+        c: `#include <stdio.h>\n\nint main() {\n  // Your code here\n  return 0;\n}`
     };
 
     // Load boilerplate on first render
