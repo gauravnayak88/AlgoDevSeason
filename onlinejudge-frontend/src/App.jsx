@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import API from './api';
-import Navbar from './Navbar';
+import Navbar from './navbar';
 import Login from './Login';
 import Register from './Register';
 import Dashboard from './Dashboard';
