@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:8000/",
+  // baseURL: "http://3.110.227.60:8000/",
+  baseURL: import.meta.env.VITE_API_BASE_URL
 });
 
 
@@ -16,7 +17,7 @@ API.interceptors.response.use(
     if (error.response?.status === 401 && refreshToken && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const res = await axios.post("http://localhost:8000/auth/jwt/refresh/", {
+        const res = await API.post("/auth/jwt/refresh/", {
           refresh: refreshToken,
         });
         localStorage.setItem("access", res.data.access);

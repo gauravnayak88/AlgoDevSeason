@@ -1,6 +1,7 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from . import views
+from django.conf import settings
 
 urlpatterns = [
     # DRF-React URL'S
@@ -25,3 +26,8 @@ urlpatterns = [
     path("api/run", views.run_code_api, name='run-code-api'),
     path("auth/jwt/create/", views.EmailOrUsernameLoginView.as_view(), name="custom_jwt_create"),
 ]
+
+if not settings.DEBUG:
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', views.serve_media)
+    ]

@@ -57,7 +57,7 @@ function ProblemDetail() {
     }, [isAuthenticated])
 
     useEffect(() => {
-        axios.get(`http://localhost:8000/api/problems/${id}/`)
+        API.get(`/api/problems/${id}/`)
             .then(res => { setProblem(res.data) })
             .catch(err => console.error(err))
     }, [id]);
@@ -345,18 +345,19 @@ function ProblemDetail() {
                             </div>
                             <div className="flex gap-3 flex-wrap">
                                 {isAuthenticated &&
-                                    <>
-                                        <Link to={`/problems/${problem.id}/solutions`}>
-                                            <button className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                                                View Submissions
-                                            </button>
-                                        </Link>
-                                        <Link to={`/problems/${problem.id}/testcases`}>
-                                            <button className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
-                                                View Test Cases
-                                            </button>
-                                        </Link>
-                                    </>
+                                    <Link to={`/problems/${problem.id}/solutions`}>
+                                        <button className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                                            View Submissions
+                                        </button>
+                                    </Link>
+
+                                }
+                                {isAuthenticated && profile?.role == 'staff' &&
+                                    <Link to={`/problems/${problem.id}/testcases`}>
+                                        <button className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                                            View Test Cases
+                                        </button>
+                                    </Link>
                                 }
                             </div>
                         </div>
@@ -484,6 +485,7 @@ function ProblemDetail() {
                         </button>
                     </div>
 
+                    {isAuthenticated && 
                     <div className="flex items-center gap-3 mt-6">
                         <select
                             value={selectedAIOption}
@@ -507,6 +509,7 @@ function ProblemDetail() {
                             Go
                         </button>
                     </div>
+                    }
 
 
                     {(aiReview || aiHints || aiGeneratedCode) && (

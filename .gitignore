@@ -20,5 +20,10 @@ db.sqlite3
 
 # Mac
 .DS_Store
+Thumbs.db
 
 .env
+**/.env
+**/.env.*
+
+onlinejudge/keys

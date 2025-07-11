@@ -7,7 +7,7 @@ from django.views.decorators.cache import never_cache
 from django.contrib import messages
 from .models import Profile, Problem, Topic, Contest, ProblemForm, TestCase, TestCaseForm, Solution, Discussion, Comment, SolutionForm, RegisterForm
 from django.db.models import Q, F, Count, Sum, Case, When, IntegerField
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponseForbidden, JsonResponse, FileResponse, Http404
 from collections import defaultdict
 from django.core.files.storage import default_storage
 from django.conf import settings
@@ -34,6 +34,12 @@ from .permissions import IsStaffUser, IsOwnerOrReadOnly
 
 
 # Create your views here.
+
+def serve_media(request, path):
+    full_path = os.path.join(settings.MEDIA_ROOT, path)
+    if os.path.exists(full_path):
+        return FileResponse(open(full_path, 'rb'))
+    raise Http404("File not found")
 
 # Class based views
 
@@ -99,13 +105,13 @@ def ai_generate_code_api(request):
     language = request.data.get("language", "")
 
     prompt = f"""You're an experienced competitive programmer.
-Write a clean and optimal solution to the following problem in {language}.
+    Write a clean and optimal solution to the following problem in {language}.
 
-Problem:
-{problem}
+    Problem:
+    {problem}
 
-Use clear code, helpful comments, and avoid unnecessary input/output wrapping unless required.
-"""
+    Use clear code, helpful comments, and avoid unnecessary input/output wrapping unless required.
+    """
 
     code = query_openrouter(prompt)
     print(code)

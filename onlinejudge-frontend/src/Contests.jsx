@@ -4,6 +4,7 @@ import ContestAdminPanel from "./ContestAdminPanel";
 import API from "./api";
 
 function Contests() {
+    const [profile, setProfile] = useState(null);
     const [contests, setContests] = useState([]);
     const [now, setNow] = useState(new Date());
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -16,6 +17,14 @@ function Contests() {
         const interval = setInterval(() => setNow(new Date()), 1000);
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        API.get('/api/profile/')
+            .then((res) => setProfile(res.data))
+            .catch(err => console.log(err))
+            .finally(() => setLoading(false));
+    }, []);
+
 
     useEffect(() => {
         const token = localStorage.getItem("access");
@@ -72,8 +81,9 @@ function Contests() {
     return (
         <div className="p-6 max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold mb-6 text-blue-800">Contests</h2>
+            {isAuthenticated && profile?.role == 'staff' &&
             <Link to={'/admin/contests'}><button>Go to contest admin panel</button></Link>
-
+            }
             {contests.length === 0 ? (
                 <p>Loading contests...</p>
             ) : (

@@ -21,5 +21,5 @@ COPY . .
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
-# Run server (you can change this to gunicorn or CMD as needed)
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run server
+CMD ["gunicorn", "onlinejudge.wsgi:application", "--bind", "0.0.0.0:8000"]
