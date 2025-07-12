@@ -24,7 +24,7 @@ function SolutionsInline({ problemId, filterMine, profile, onSelect }) {
     const filtered = solutions.filter(sol => !filterMine || sol.written_by === profile?.username);
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
             {filtered.map((sol) => {
                 const formattedDate = new Date(sol.submitted_at).toLocaleString("en-IN", options);
                 return (

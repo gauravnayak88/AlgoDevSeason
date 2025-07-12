@@ -38,7 +38,9 @@ function Profile() {
             API.get('/api/solutions/')
                 .then(res => {
                     // Filter only current user's submissions
-                    const userSubs = res.data.filter(s => s.written_by === profile.username);
+                    const userSubs = res.data
+                        .filter(s => s.written_by === profile.username)
+                        .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
                     setSubmissions(userSubs);
                 })
                 .catch(err => console.log(err));
