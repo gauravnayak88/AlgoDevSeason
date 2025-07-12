@@ -21,8 +21,7 @@ function Contests() {
     useEffect(() => {
         API.get('/api/profile/')
             .then((res) => setProfile(res.data))
-            .catch(err => console.log(err))
-            .finally(() => setLoading(false));
+            .catch(err => console.log(err));
     }, []);
 
 
