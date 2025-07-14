@@ -485,114 +485,131 @@ function ProblemDetail() {
                         </button>
                     </div>
 
-                    {isAuthenticated && 
-                    <div className="flex items-center gap-3 mt-6">
-                        <select
-                            value={selectedAIOption}
-                            onChange={(e) => setSelectedAIOption(e.target.value)}
-                            className="border px-3 py-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
-                        >
-                            <option value="review">AI Review</option>
-                            <option value="hint">AI Hint</option>
-                            <option value="code">AI Code</option>
-                        </select>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (selectedAIOption === "review") handleAIReview();
-                                else if (selectedAIOption === "hint") handleAIHint();
-                                else if (selectedAIOption === "code") handleAICodeGen();
-                            }}
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                            disabled={isProcessing}
-                        >
-                            Go
-                        </button>
-                    </div>
+                    {isAuthenticated &&
+                        <div className="flex items-center gap-3 mt-6">
+                            <select
+                                value={selectedAIOption}
+                                onChange={(e) => setSelectedAIOption(e.target.value)}
+                                className="border px-3 py-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
+                            >
+                                <option value="review">AI Review</option>
+                                <option value="hint">AI Hint</option>
+                                <option value="code">AI Code</option>
+                            </select>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (selectedAIOption === "review") handleAIReview();
+                                    else if (selectedAIOption === "hint") handleAIHint();
+                                    else if (selectedAIOption === "code") handleAICodeGen();
+                                }}
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                disabled={isProcessing}
+                            >
+                                Go
+                            </button>
+                        </div>
                     }
 
 
                     {(aiReview || aiHints || aiGeneratedCode) && (
                         <div>
                             {selectedAIOption === "review" && aiReview && (
-                                <div className="whitespace-pre-wrap break-words bg-gray-100 p-4 rounded-md shadow-inner font-mono text-sm">
-                                    <h4 className="font-bold mb-2">AI Review:</h4>
-                                    <div className="max-h-120 overflow-y-auto">
-                                    <ReactMarkdown
-                                        remarkPlugins={[remarkGfm, remarkMath]}
-                                        rehypePlugins={[rehypeKatex]}
-                                        components={{
-                                            p: ({ children }) => <p className="mb-4">{children}</p>,
-                                            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
-                                            h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
-                                            li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
-                                            code({ node, inline, className, children, ...props }) {
-                                                return inline ? (
-                                                    <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm">{children}</code>
-                                                ) : (
-                                                    <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">
-                                                        <code className="text-white text-sm">{children}</code>
-                                                    </pre>
-                                                );
-                                            }
-                                        }}
-                                    >
-                                        {aiReview}
-                                    </ReactMarkdown>
+                                <div className="bg-white border border-gray-300 shadow-lg rounded-xl overflow-hidden">
+                                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3 border-b border-gray-200">
+                                        <h4 className="text-lg font-semibold text-blue-800">🤖 AI Review</h4>
+                                    </div>
+                                    <div className="max-h-[500px] overflow-y-auto p-6 text-sm font-mono whitespace-pre-wrap break-words bg-gray-50">
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm, remarkMath]}
+                                            rehypePlugins={[rehypeKatex]}
+                                            components={{
+                                                p: ({ children }) => <p className="mb-4">{children}</p>,
+                                                h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
+                                                h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
+                                                li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
+                                                code({ node, inline, className, children, ...props }) {
+                                                    return inline ? (
+                                                        <code className="inline-block align-middle bg-gray-200 text-gray-800 px-1 py-0.5 rounded text-sm whitespace-nowrap">
+                                                            {children}
+                                                        </code>
+                                                    ) : (
+                                                        <code className="bg-gray-900 text-white text-sm">
+                                                            {children}
+                                                        </code>
+                                                    );
+                                                }
+                                            }}
+                                        >
+                                            {aiReview}
+                                        </ReactMarkdown>
                                     </div>
                                 </div>
+
                             )}
 
                             {selectedAIOption === "hint" && aiHints && (
-                                <div className="bg-purple-50 p-3 mt-4 rounded font-mono text-sm">
-                                    <h4 className="font-bold mb-2">AI Hints:</h4>
-                                    <div className="max-h-96 overflow-y-auto">
-                                    <ReactMarkdown
-                                        remarkPlugins={[remarkGfm, remarkMath]}
-                                        rehypePlugins={[rehypeKatex]}
-                                        components={{
-                                            p: ({ children }) => <p className="mb-4">{children}</p>,
-                                            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
-                                            h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
-                                            li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
-                                            code({ node, inline, className, children, ...props }) {
-                                                return inline ? (
-                                                    <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm">{children}</code>
-                                                ) : (
-                                                    <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">
-                                                        <code className="text-white text-sm">{children}</code>
-                                                    </pre>
-                                                );
-                                            }
-                                        }}
-                                    >{aiHints}</ReactMarkdown>
+                                <div className="bg-white border border-gray-300 shadow-lg rounded-xl overflow-hidden">
+                                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3 border-b border-gray-200">
+                                        <h4 className="text-lg font-semibold text-blue-800">🤖 AI Hints</h4>
+                                    </div>
+                                    <div className="max-h-[500px] overflow-y-auto p-6 text-sm font-mono whitespace-pre-wrap break-words bg-gray-50">
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm, remarkMath]}
+                                            rehypePlugins={[rehypeKatex]}
+                                            components={{
+                                                p: ({ children }) => <p className="mb-4">{children}</p>,
+                                                h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
+                                                h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
+                                                li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
+                                                code({ node, inline, className, children, ...props }) {
+                                                    return inline ? (
+                                                        <code className="inline-block align-middle bg-gray-200 text-gray-800 px-1 py-0.5 rounded text-sm whitespace-nowrap">
+                                                            {children}
+                                                        </code>
+                                                    ) : (
+                                                        <code className="bg-gray-900 text-white text-sm">
+                                                            {children}
+                                                        </code>
+                                                    );
+                                                }
+                                            }}
+                                        >
+                                            {aiHints}
+                                        </ReactMarkdown>
                                     </div>
                                 </div>
                             )}
 
                             {selectedAIOption === "code" && aiGeneratedCode && (
-                                <div className="bg-orange-50 p-3 mt-4 rounded font-mono text-sm">
-                                    <h4 className="font-bold mb-2">Generated Code:</h4>
-                                    <div className="max-h-96 overflow-y-auto">
-                                    <ReactMarkdown
-                                        remarkPlugins={[remarkGfm, remarkMath]}
-                                        rehypePlugins={[rehypeKatex]}
-                                        components={{
-                                            p: ({ children }) => <p className="mb-4">{children}</p>,
-                                            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
-                                            h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
-                                            li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
-                                            code({ node, inline, className, children, ...props }) {
-                                                return inline ? (
-                                                    <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm">{children}</code>
-                                                ) : (
-                                                    <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">
-                                                        <code className="text-white text-sm">{children}</code>
-                                                    </pre>
-                                                );
-                                            }
-                                        }}
-                                    >{aiGeneratedCode}</ReactMarkdown>
+                                <div className="bg-white border border-gray-300 shadow-lg rounded-xl overflow-hidden">
+                                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3 border-b border-gray-200">
+                                        <h4 className="text-lg font-semibold text-blue-800">🤖 AI Generated Code</h4>
+                                    </div>
+                                    <div className="max-h-[500px] overflow-y-auto p-6 text-sm font-mono whitespace-pre-wrap break-words bg-gray-50">
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm, remarkMath]}
+                                            rehypePlugins={[rehypeKatex]}
+                                            components={{
+                                                p: ({ children }) => <p className="mb-4">{children}</p>,
+                                                h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
+                                                h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
+                                                li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
+                                                code({ node, inline, className, children, ...props }) {
+                                                    return inline ? (
+                                                        <code className="inline-block align-middle bg-gray-200 text-gray-800 px-1 py-0.5 rounded text-sm whitespace-nowrap">
+                                                            {children}
+                                                        </code>
+                                                    ) : (
+                                                        <pre className="bg-gray-900 text-white p-4 rounded-lg mb-4 overflow-auto text-sm">
+                                                            <code className="whitespace-pre-wrap">{children}</code>
+                                                        </pre>
+                                                    );
+                                                }
+                                            }}
+                                        >
+                                            {aiGeneratedCode}
+                                        </ReactMarkdown>
                                     </div>
                                 </div>
                             )}

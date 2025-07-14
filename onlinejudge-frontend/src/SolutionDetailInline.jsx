@@ -99,11 +99,13 @@ function SolutionDetailInline({ solution }) {
                                     li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
                                     code({ node, inline, className, children, ...props }) {
                                         return inline ? (
-                                            <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm">{children}</code>
+                                            <code className="inline-block align-middle bg-gray-200 text-gray-800 px-1 py-0.5 rounded text-sm whitespace-nowrap">
+                                                {children}
+                                            </code>
                                         ) : (
-                                            <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">
-                                                <code className="text-white text-sm">{children}</code>
-                                            </pre>
+                                            <code className="bg-gray-900 text-white  text-sm">
+                                                {children}
+                                            </code>
                                         );
                                     }
                                 }}
