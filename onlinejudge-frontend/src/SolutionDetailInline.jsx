@@ -88,27 +88,29 @@ function SolutionDetailInline({ solution }) {
                 </button>
                 {aiReview &&
                     <div className="prose max-w-none bg-gray-50 p-4 rounded-md shadow-inner mb-4 overflow-auto">
-                        <ReactMarkdown
-                            remarkPlugins={[remarkGfm, remarkMath]}
-                            rehypePlugins={[rehypeKatex]}
-                            components={{
-                                p: ({ children }) => <p className="mb-4">{children}</p>,
-                                h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
-                                h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
-                                li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
-                                code({ node, inline, className, children, ...props }) {
-                                    return inline ? (
-                                        <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm">{children}</code>
-                                    ) : (
-                                        <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">
-                                            <code className="text-white text-sm">{children}</code>
-                                        </pre>
-                                    );
-                                }
-                            }}
-                        >
-                            {aiReview}
-                        </ReactMarkdown>
+                        <div className="max-h-120 overflow-y-auto">
+                            <ReactMarkdown
+                                remarkPlugins={[remarkGfm, remarkMath]}
+                                rehypePlugins={[rehypeKatex]}
+                                components={{
+                                    p: ({ children }) => <p className="mb-4">{children}</p>,
+                                    h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
+                                    h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
+                                    li: ({ children }) => <li className="list-disc ml-6 mb-1">{children}</li>,
+                                    code({ node, inline, className, children, ...props }) {
+                                        return inline ? (
+                                            <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm">{children}</code>
+                                        ) : (
+                                            <pre className="bg-gray-800 text-white p-3 rounded mb-4 overflow-auto">
+                                                <code className="text-white text-sm">{children}</code>
+                                            </pre>
+                                        );
+                                    }
+                                }}
+                            >
+                                {aiReview}
+                            </ReactMarkdown>
+                        </div>
                     </div>
                 }
 

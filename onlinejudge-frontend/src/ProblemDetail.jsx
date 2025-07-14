@@ -516,6 +516,8 @@ function ProblemDetail() {
                         <div>
                             {selectedAIOption === "review" && aiReview && (
                                 <div className="whitespace-pre-wrap break-words bg-gray-100 p-4 rounded-md shadow-inner font-mono text-sm">
+                                    <h4 className="font-bold mb-2">AI Review:</h4>
+                                    <div className="max-h-120 overflow-y-auto">
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm, remarkMath]}
                                         rehypePlugins={[rehypeKatex]}
@@ -537,12 +539,14 @@ function ProblemDetail() {
                                     >
                                         {aiReview}
                                     </ReactMarkdown>
+                                    </div>
                                 </div>
                             )}
 
                             {selectedAIOption === "hint" && aiHints && (
                                 <div className="bg-purple-50 p-3 mt-4 rounded font-mono text-sm">
                                     <h4 className="font-bold mb-2">AI Hints:</h4>
+                                    <div className="max-h-96 overflow-y-auto">
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm, remarkMath]}
                                         rehypePlugins={[rehypeKatex]}
@@ -562,12 +566,14 @@ function ProblemDetail() {
                                             }
                                         }}
                                     >{aiHints}</ReactMarkdown>
+                                    </div>
                                 </div>
                             )}
 
                             {selectedAIOption === "code" && aiGeneratedCode && (
                                 <div className="bg-orange-50 p-3 mt-4 rounded font-mono text-sm">
                                     <h4 className="font-bold mb-2">Generated Code:</h4>
+                                    <div className="max-h-96 overflow-y-auto">
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm, remarkMath]}
                                         rehypePlugins={[rehypeKatex]}
@@ -587,6 +593,7 @@ function ProblemDetail() {
                                             }
                                         }}
                                     >{aiGeneratedCode}</ReactMarkdown>
+                                    </div>
                                 </div>
                             )}
                         </div>
