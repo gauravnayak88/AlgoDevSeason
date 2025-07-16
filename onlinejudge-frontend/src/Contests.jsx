@@ -77,6 +77,13 @@ function Contests() {
 
     };
 
+    if (!isAuthenticated) return (
+        <div className="p-6 max-w-4xl mx-auto">
+            <h2 className="text-3xl font-bold mb-6 text-blue-800">Contests</h2>
+            <Link to={'/login'} className="text-blue-900">Log in to view contests</Link>
+        </div>
+    )
+
     return (
         <div className="p-6 max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold mb-6 text-blue-800">Contests</h2>
@@ -123,11 +130,11 @@ function Contests() {
                                     {contest.problems.length} problems
                                 </p>
 
-                                <ul className="mt-2 text-sm text-gray-800 list-disc ml-4">
+                                {/* <ul className="mt-2 text-sm text-gray-800 list-disc ml-4">
                                     {(!isJoined && !hasEnded) && contest.problems.map(problem => (
                                         <li key={problem.id}>{problem.name}</li>
                                     ))}
-                                </ul>
+                                </ul> */}
 
                                 {!isJoined && !hasEnded && (
                                     <button

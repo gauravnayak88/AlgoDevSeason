@@ -82,18 +82,20 @@ def ai_hint_api(request):
     code = request.data.get("code", "")
     language = request.data.get("language", "")
 
-    prompt = f"""You're an expert problem-solving assistant.
-    The user is working on this problem (in {language}):
+    prompt = f"""You are a helpful programming mentor.
 
+    The user is solving the following problem in {language}:
     {problem}
 
-    Here is the current solution attempt:
-
+    Here is their current code attempt:
     {code}
 
-    Suggest up to 3 useful hints to help the user debug, improve, or proceed with the solution.
-    Avoid directly giving away the answer.
+    Give 2–3 actionable hints that guide the user toward a better or correct solution. 
+    - Avoid giving the full solution.
+    - Focus on helping the user identify possible mistakes, edge cases, or logic gaps.
+    - Be concise and use bullet points if appropriate.
     """
+
 
     hint = query_openrouter(prompt)
     print(hint)
@@ -104,14 +106,19 @@ def ai_generate_code_api(request):
     problem = request.data.get("problem", "")
     language = request.data.get("language", "")
 
-    prompt = f"""You're an experienced competitive programmer.
-    Write a clean and optimal solution to the following problem in {language}.
+    prompt = f"""You are a skilled competitive programmer.
 
-    Problem:
+    Write an efficient and well-structured solution in {language} for the following problem:
+
     {problem}
 
-    Use clear code, helpful comments, and avoid unnecessary input/output wrapping unless required.
+    Guidelines:
+    - Use clear and concise code.
+    - Include brief inline comments explaining key steps.
+    - Avoid unnecessary input/output handling (assume input is already provided).
+    - Optimize for readability and performance.
     """
+
 
     code = query_openrouter(prompt)
     print(code)
@@ -122,7 +129,20 @@ def ai_review_api(request):
     code = request.data.get("code")
     language = request.data.get("language")
 
-    prompt = f"Review this {language} code:\n\n{code}\n\nBriefly comment on its quality, improvements, and logic."
+    prompt = f"""You're a senior software engineer.
+
+    Review the following {language} code for logic, clarity, and style:
+
+    {code}
+
+    Your review should include:
+    - Strengths of the code
+    - Potential bugs or logic issues (if any)
+    - Suggestions for improving performance, readability, or structure
+
+    Keep the review brief and constructive.
+    """
+
 
     review = query_openrouter(prompt)
     print(review)
