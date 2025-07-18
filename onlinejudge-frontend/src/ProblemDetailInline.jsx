@@ -3,7 +3,14 @@ import CodeMirror from '@uiw/react-codemirror';
 import { cpp } from '@codemirror/lang-cpp';
 import { java } from '@codemirror/lang-java';
 import { python } from '@codemirror/lang-python';
+import ReactMarkdown from 'react-markdown';
+import 'github-markdown-css/github-markdown.css'
+import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+import 'katex/dist/katex.min.css'
 import API from "./api";
+import TestCaseViewer from "./TestCaseViewer";
 
 const boilerplate = {
     cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n  // Your code here\n  return 0;\n}`,
@@ -99,6 +106,51 @@ export default function ProblemDetailInline({ profile, problem, isSolved, isEnde
         <div className="bg-white p-6 rounded shadow">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Solve: {problem.name}</h3>
             {isSolved && <p className="text-green-600 font-semibold">Solved ✅</p>}
+            <div className="flex items-center gap-3 mb-2">
+                <span
+                    className={`inline-block px-3 py-1 text-sm rounded-full font-semibold
+                                        ${problem.difficulty === "easy"
+                            ? "bg-green-100 text-green-700"
+                            : problem.difficulty === "medium"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-700"
+                        }`}
+                >
+                    {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
+                </span>
+            </div>
+            <div className="prose max-w-none bg-gray-50 p-4 rounded-md shadow-inner mb-4 overflow-auto markdown-body">
+                <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                >
+                    {problem.statement}
+                </ReactMarkdown>
+                {problem.sample_test_cases.length > 0 && (
+                    <div className="bg-gray-50 p-4 rounded-md shadow-inner mb-4">
+                        <h4 className="text-lg font-semibold mb-2">Sample Test Cases</h4>
+                        <ul className="space-y-4 text-sm font-mono">
+                            {problem.sample_test_cases.map((tc, idx) => (
+                                <li key={tc.id}>
+                                    <strong>Example {idx + 1}:</strong><br />
+                                    <strong>Input:</strong><br />
+                                    <TestCaseViewer fileUrl={tc.input_file} />
+                                    <br />
+                                    <strong>Output:</strong><br />
+                                    <TestCaseViewer fileUrl={tc.output_file} />
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                <h3>Constraints:</h3>
+                <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                >
+                    {problem.constraints}
+                </ReactMarkdown>
+            </div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Language</label>
             <select
                 value={language}
